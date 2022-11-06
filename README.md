@@ -111,5 +111,297 @@ Ref:
 * https://circle.visual-paradigm.com/docs/code-engineering/object-relational-mapping/
 * https://www.keboola.com/blog/acid-transactions
 
+## ERD
 
+![ERD](docs/ERD.png)
+
+---
+
+## Database relationships and descriptions
+
+---
   
+### Users table
+  
+This table contains basic information for all users.
+Below are columns with their data types and constraints.
+
+* id (PK, serial int, not null) Primary key
+* first name (varchar(100), not null)
+* last name (varchar(100), not null) 
+* Password (text, not null), the password is used for user authentication
+* Is admin (boolean, default value is false). This column is for user authorization. Users who have True value are allowed to edit products. Only admin users have true value for this column. Customer users all have the default value. 
+
+---
+
+### Customers table
+
+This table contains specific information for customers.
+Columns, data types, and constrains are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Email (varchar(255), not null)
+* Phone (int, not null)
+* User id (int, FK, not null). Links the users table and customers table
+* Address(int, FK, not null). Links the customers table and addresses table
+
+#### Relationship (users table and customers table)
+
+The relationship between the users table and the customers table is a one-to-one relationship. A user could be created before the customer because the newly created user could be an admin instead of a customer. But a customer can only be created after the user. Therefore, a customer has one and only one user, while a user has 0 or 1 customer.
+
+#### Relationship (addresses table and customers table)
+
+The relationship between the addresses table and the customers table is a one-to-many relationship. A user typically lives in one place and uses this place for delivery. And many customers might live together and shop separately. So a user has one and only one address, while an address might accommodate one or many customers.
+
+---
+
+### Addresses table
+
+This table contains customers' addresses.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Street number ( int, not null)
+* Street name (varchar(100), not null)
+* Suburb (varchar(100), not null)
+* Postcode_id (int, FK, not null) Links the address table and postcode table.
+
+#### Relationship (addresses table and postcodes table)
+
+Because different customers might have the same postcode, it will become repetitive if I leave it in the address table. So I have created a new table for it. I have also removed the state column from the address table because it links to the postcode rather than the address. 
+The relationship between the postcodes table and the addresses table is a one-to-many relationship. Customers might live in the same area and have the same postcode for their address. Or none of them living in this area. And an address must only have one postcode. So a postcode is included in zero or many addresses, and an address has one and only one postcode.
+
+---
+
+### Postcodes table
+
+This table contains the postcode and corresponding state.
+Columns, data types, and constraints are listed below:
+
+* Postcode (PK, int, not null)
+* State (varchar(100), not null)
+
+The primary key has been used as a foreign key in the addresses table, which was already mentioned above.
+
+---
+
+### Payment accounts table
+
+This table contains the payment information of the customer.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Card number (int, not null)
+* Card owner's name (int, not null)
+* Expire date (date, not null)
+* Security number (int(3), not null)
+* Customer id (int, FK, not null). Links the payment methods table to the customers table.
+
+#### Relationship (payment accounts table and customers table)
+
+The relationship between the payment account table and the customers table is a one-to-many relationship. A customer might use one or many cards for the payment. And one card only belongs to one person. So a customer has one or many payment accounts. A payment account belongs to one and only one customer. 
+
+---
+
+### Orders table
+
+This table contains basic information for orders.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Order date (date, not null)
+* Ship date (date, not null)
+* Status (FK, int, not null). Links the orders table and order status table.
+* Customer id (FK, int, not null). Links the orders table and customers table.
+* Shipping method (FK, int, not null). Links the orders table and shipping methods table.
+* Payment account (FK, int, not null). Links the orders table and payment accounts table.
+
+#### Relationship (order status table and orders table)
+
+The relationship between the status table and the orders table is a one-to-many relationship. An order can only have one status, and it can not simultaneously have more than one status. The status could be used by many or not by any of the orders. So an order has one and only one status, and an order status has been used by zero or many orders.
+
+#### Relationship (orders table and customers table)
+
+The relationship between the customers table and the orders table is a one-to-many relationship. A customer can be created before the order. The customer might not order anything or order many times. An order can not be created before a customer. It is made by only one customer. So a customer place zero or many orders, and an order is made by one and only one customer.
+
+#### Relationship (shipping methods table and orders table)
+
+The relationship between the shipping methods table and the orders table is a one-to-many relationship. An order will be shipped by only one method, and a shipping method can be selected by many orders or none of them. So an order has one and only one shipping method. A shipping method could be selected by zero or many orders.
+
+#### Relationship (payment accounts table and orders table)
+
+The relationship between the payment accounts table and the orders table is a one-to-many relationship. An order could only be paid by one payment account. A payment account might be used to pay for many orders or have never been used for the payment. So an order paid by one and only one payment account, and a payment account could be used to pay for zero or many orders.
+
+---
+
+### Order status table
+
+This table contains different types of order statuses.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Description (varchar(50), not null)
+
+The primary key of this table has been used as the foreign key in the orders table to link these two tables. The relationship has been mentioned above.
+
+---
+
+### Shipping methods table
+
+This table contains different types of shipping methods.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Type (text, not null)
+* Price(int, not null)
+
+The primary key of this table has been used as the foreign key in the orders table to link these two tables. The relationship has been mentioned above.
+
+---
+
+### Products table
+
+This table contains information for products.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null). Primary Key
+* Name (varchar(100), not null)
+* Description(text)
+* Price(int, not null)
+* Stock(int, not null)
+* Create_date (date, not null)
+* Category(int, FK, not null). Links the products table and the categories table
+
+#### Creating join table
+
+Initially, this table links to the orders table, and there is a many-to-many relationship between them. An order could contain only one or many products. A product might be included in many orders or none of them. So an order contains one or many products, a product might be included in zero or many orders.  
+Because it is a many-to-many relationship, we need to create a join table for these two tables, which is the order details table. These two tables' primary key becomes the join table's foreign key.
+
+---
+
+### Order details table
+
+Join table for orders and products.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null)
+* Price (int, not null). Creating a price column again is to ensure that if the price of the product changes later, the price here remains unchanged. Without this column, if we update the product's price, the price in the order details also changes, which results in inaccurate data in this table.
+* Order id (int, FK, not null). Links the order details table and orders table
+* Product id (int, FK, not null). Links the product table and order details table
+  
+These two columns link to the orders and products table.
+
+Each order detail contains information about one product.
+
+#### Relationship (order details table and orders table)
+
+An order detail can not be created after an order. Once an order has been created, it has at least one order detail containing this order's information. It can not contains information for different orders. Each order has one or many products. Therefore, an order has one or many order details. So an order has one or many order details, and an order detail contains information for one and only one order.
+
+#### Relationship (order details table and products table)
+
+An order detail can only be created after the product as well. But the product can be created without order details because customers might not order it. Many customers might order the same product. Hence a product can be included in many order details. 
+So an order detail contains one and only one product. A product might be included in zero or many order details.
+
+---
+
+### Categories table
+
+This table contains different categories of products.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Type (text, not null)
+
+#### Relationship (categories table and products table)
+
+The relationship between the categories and the products table is a one-to-many relationship. A sticker shop may have many products in one category, or none belongs to a particular category, and a product could only be categorized into one category. So a product has one and only one category, and a category has zero or many products.
+
+---
+
+### Reviews table
+
+This table contains reviews of the product made by customers.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Comment (text)
+* Rating (int(0-5), not null)
+* Customer id (int, FK, not null) Links to the customers table
+* Product id (int, FK, not null). Links to the products table
+
+#### Relationship (customers table and reviews table)
+
+The relationship between the customers table and the reviews table is a one-to-many relationship. Some customers might not leave any reviews after their purchases. Some customers might order many times and leave a review every time after they purchases. A review could only be made by one customer. So a customer could leave zero or many reviews. Reviews belong to one and only one customer.
+
+#### Relationship (products table and reviews table)
+
+The relationship between the products table and the reviews table is also a one-to-many relationship. Many customers might purchase the same product and leave reviews for this product. A product might also not have been purchased by anyone and has no reviews. And each review only links to one particular product, and customers can not comment on two products in one review. They need to comment separately for different products as each has pros and cons. So a product might have zero or many reviews. A review relates to one and only one product.
+
+---
+
+### Transactions table
+
+This table contains the transaction information.
+Columns, data types, and constraints are listed below:
+
+* Id (PK, serial int, not null) Primary key
+* Transaction date (date)
+* Order id (int, FK, not null) Links the orders table
+* Customer id (int, FK, not null) Links the customers table
+
+#### Relationship (transactions table and customers table)
+
+The relationship between the transactions table and the customers table is a one-to-many relationship. A customer can be created before a transaction, but a transaction can not be created without a customer. Also, a customer could have many transactions. Therefore, a customer has zero or many transactions, and a transaction belongs to one and only one customer.
+
+#### Relationship (transactions table and orders table)
+
+The relationship between the orders table and the transactions details table is a one-to-one relationship. An order could only have a transaction and vice versa.
+
+## Project Management
+
+---
+I used trello to create a digital kanban board for this project.
+
+Kanban is one of agile project management tool. The workflow is visualized for all team members, normally represent as kanban board. The components of kanban board includes cards, columns, work-in-progress limits, etc.
+
+* Kanban Cards
+  Each card represents a task(component) of the project
+* Kanban Columns
+  Each column represents a stage of the workflow. Developers could move cards into the corresponding columns. For example, when developers are working on a task, that task could be placed in the doing column. Once the task is finished, it should be moved to done column.
+* Work-in-progress limits
+  This limits the maximum number of tasks within each stage of the workflow
+
+Kanban provides great planning flexibility of the project. Once a task finished, developers will take off the task that is on the top of the backlog and start working on it. This allows the product owner to reprioritize the tasks in the backlog while the team are working on the current tasks without affecting the team.
+Kanban also allows team to continuously deliver their project to the skateholders. In addition, kanban increased the visibility of the flow and allows all team members on the same page.
+
+Trello is one of tools used for creating kanban board. It is a visualised project management tool that allows users to organize their projects into cards, creating different stages or columns and set the work-in-progress limits. It also allows users to add timeline, label and checklist for each card. Users could arrange task based on the priority and timeline. During development, they can use the checklist to double check whether all requirements of this task has been achieved. Because it is a visualised tool, it is easy for developers and teams to understand what needs to be done and in what order.
+
+### In order to use trello and kanban board for this project:
+
+Firstly, I divided the project into small components and create cards for each of them. Each card has a checklist, includes requirements for each component. I had set different priorites and due date for each card, which helps me to make sure I am doing the tasks in the right order.
+I have created cards for:
+
+* README 
+  This task does not have due date because I might need to adjust its contents during the development.
+* main py file
+* init file
+  I have set the earlist due date for these two cards above. As they are the basic structure of the application and need to be finished first.
+* files for enviroment variables
+* create database
+* all models
+  Each model has its own card. I decided to finish them within two days and set same due date for all of them.
+* cli command
+  After creating one or two models, it is important to test it with database, to make sure it connects to the database successfully. So it has lower priority than models but higher priority than controllers.
+* all controllers
+  I have grouped routes together and create card for each controller. I would like to finish these cards after the models, therefore they have lower priority and later due date.
+* authentication and authorization
+  I will finish this together with controllers, so it has same due date with controllers.
+* third-party services or pypi packages
+* error handling
+  Same as README document, I might encounter different errors during the development. So it is an ongoing task and does not have due date.
+
+Secondly, I have created several columns or stages, includes backlog, to-do, doing, testing and done. Then I put cards into different columns based on their priority and due date. The doing column contains tasks that are currently working on, the to-do column contains tasks that haven't been worked on, but has the highest priority in the rest of tasks. The rest of tasks are in the backlog cloumn, these tasks have lowest priority.
+
+Once a task in the doing column is finished, I will move the task into the done column.  Once all tasks in the doing column are finished, I will move task from the to-do column into the doing column and working on it. At the same time, I will move tasks from the backlog column to the to-do column.
+
+If there is any additional requirements, I can easily create a new card in the backlog without affecting others.

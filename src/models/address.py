@@ -10,7 +10,6 @@ class Address(db.Model):
     suburb = db.Column(db.String(100), nullable=False)
     postcode_id = db.Column(db.Integer, db.ForeignKey("postcodes.id"), nullable=False)
   
-
     customers = db.relationship('Customer', back_populates='address')
     postcode = db.relationship('Postcode', back_populates='addresses')
 

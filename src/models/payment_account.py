@@ -10,10 +10,10 @@ class PaymentAccount(db.Model):
     expire_date = db.Column(db.String, nullable=False)
     security_no = db.Column(db.Integer, nullable=False)
     encrypted_card_no = db.Column(db.String(100), nullable=False)
-
+    customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
 
     customer = db.relationship('Customer', back_populates='payment_accounts')
-    orders = db.relationship('PaymentAccount', back_populates='payment_account')
+
 
     @staticmethod
     def encrypt_card_no(number):

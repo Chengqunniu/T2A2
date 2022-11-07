@@ -7,25 +7,24 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_date = db.Column(db.Date, nullable=False)
     ship_date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.Integer, db.ForeignKey("order_status.id"), nullable=False)
+    order_status_id = db.Column(db.Integer, db.ForeignKey("order_statues.id"), nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
-    shipping_method = db.Column(db.Integer, db.ForeignKey("shipping_methods.id"), nullable=False)
-    payment_account = db.Column(db.Integer, db.ForeignKey("payment_accounts.id"), nullable=False)
+    shipping_method_id = db.Column(db.Integer, db.ForeignKey("shipping_methods.id"), nullable=False)
 
-    status = db.relationship('Status', back_populates='orders')
+    order_status = db.relationship('OrderStatus', back_populates='orders')
     customer = db.relationship('Customer', back_populates='orders')
     shipping_method = db.relationship('ShippingMethod', back_populates='orders')
-    payment_account = db.relationship('PaymentAccount', back_populates='orders')
+    order_details = db.relationship('OrderDetail', back_populates='order', cascade='all, delete')
 
 
 
 class OrderSchema(ma.Schema):
     user = fields.List(fields.Nested('UserSchema', only=['id']))
     address = fields.List(fields.Nested('AddressSchema', exclude=['customers']))
-    payment_account = fields.List(fields.Nested('PaymentMethodSchema', only=['encrypted_card_no']))
     shipping_method = fields.List(fields.Nested('ShippingMethodSchema', exclude=['id']))
+    order_details = fields.List(fields.Nested('OrderDetailSchema', exclude=['id']))
 
-
+    
     class Meta:
-        fields = ('id', 'order_date', 'ship_date', 'status', 'customer_id', 'shipping_method', 'payment_account')
+        fields = ('id', 'order_date', 'ship_date', 'status', 'customer_id', 'shipping_method','order_details')
         

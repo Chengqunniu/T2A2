@@ -6,7 +6,7 @@ class ShippingMethod(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     type = db.Column(db.Text, nullable=False)
-    price = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
 
     orders = db.relationship('Order', back_populates='shipping_method')
 

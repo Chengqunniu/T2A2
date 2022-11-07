@@ -8,12 +8,14 @@ class Customer(db.Model):
     email = db.Column(db.String, nullable=False, unique=True)
     phone = db.Column(db.Integer, nullable=False, unique=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    address = db.Column(db.Integer, db.ForeignKey("addresses.id"), nullable=False)
+    address_id = db.Column(db.Integer, db.ForeignKey("addresses.id"), nullable=False)
 
     user = db.relationship('User', back_populates='customers')
     address = db.relationship('Address', back_populates='customers')
     payment_accounts = db.relationship('PaymentAccount', back_populates='customer', cascade='all, delete')
-    orders = db.relationship('Order', back_populates='customer')
+    orders = db.relationship('Order', back_populates='customer', cascade='all, delete')
+    reviews = db.relationship('Review', back_populates='customer')
+
 
 
 class CustomerSchema(ma.Schema):
@@ -21,7 +23,9 @@ class CustomerSchema(ma.Schema):
     address = fields.List(fields.Nested('AddressSchema', exclude=['customers']))
     payment_accounts = fields.List(fields.Nested('PaymentAccountSchema', only=['encrypted_card_no']))
     orders = fields.List(fields.Nested('OrderSchema', exclude=['payment_account', 'customer_id']))
+    reviews = fields.List(fields.Nested('ReviewSchema', exclude=['customer_id']))
+
 
     class Meta:
-        fields = ('id', 'email', 'phone', 'address', 'user', 'payment_accounts', 'orders')
+        fields = ('id', 'email', 'phone', 'address', 'user', 'payment_accounts', 'orders', 'reviews')
         

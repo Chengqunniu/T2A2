@@ -8,7 +8,7 @@ class Address(db.Model):
     street_number = db.Column(db.Integer, nullable=False)
     street_name = db.Column(db.String(100), nullable=False)
     suburb = db.Column(db.String(100), nullable=False)
-    postcode_id = db.Column(db.Integer, db.ForeignKey("postcodes.id"), nullable=False)
+    postcode_id = db.Column(db.Integer, db.ForeignKey("postcodes.postcode"), nullable=False)
   
     customers = db.relationship('Customer', back_populates='address')
     postcode = db.relationship('Postcode', back_populates='addresses')
@@ -19,5 +19,5 @@ class AddressSchema(ma.Schema):
 
 
     class Meta:
-        fields = ('id','street_number', 'street_name', 'suburb', 'postcode')
+        fields = ('id','street_number', 'street_name', 'suburb', 'postcode','customers')
         

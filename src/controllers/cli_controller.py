@@ -21,27 +21,32 @@ db_commands = Blueprint('db', __name__)
 
 @db_commands.cli.command('create')
 def create_db():
+    ''' Create tables'''
     db.create_all()
     print("Tables created")
 
 @db_commands.cli.command('drop')
 def drop_db():
+    ''' Drop tables'''
     db.drop_all()
     print("Tables dropped")
 
 @db_commands.cli.command('seed')
 def seed_db():
+    ''' Seed tables'''
     users = [
         User(
             first_name='John',
             last_name='Cleese',
             password=bcrypt.generate_password_hash('123').decode('utf-8'),#originally hashing return hexadecimal, it is better to use utf8
-            is_admin=True
+            is_admin=True,
+            email='admin@spam.com'
         ),
         User(
             first_name='Pop',
             last_name='Mart',
-            password=bcrypt.generate_password_hash('456').decode('utf-8')
+            password=bcrypt.generate_password_hash('456').decode('utf-8'),
+            email='popmart@spam.com'
         )
     ]
     db.session.add_all(users)
@@ -114,7 +119,6 @@ def seed_db():
 
     customers = [
         Customer(
-            email='popmart@spam.com',
             phone=1234565,
             user_id=2,
             address_id=1

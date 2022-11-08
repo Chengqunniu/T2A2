@@ -15,7 +15,7 @@ class User(db.Model):
     customers = db.relationship('Customer', back_populates='user', cascade='all, delete')
 
 class UserSchema(ma.Schema):
-    customers = fields.List(fields.Nested('CustomerSchema', only=['id']))
+    customers = fields.List(fields.Nested('CustomerSchema', only=['id', 'phone']))
 
     class Meta:
         fields = ('id', 'first_name', 'last_name', 'email','password', 'is_admin', 'customers')

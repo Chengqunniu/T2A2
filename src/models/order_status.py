@@ -13,5 +13,5 @@ class OrderStatus(db.Model):
 class OrderStatusSchema(ma.Schema):
 
     class Meta:
-        fields = ('postcode','state')
+        fields = ('id', 'type')
         

@@ -11,8 +11,6 @@ class Postcode(db.Model):
 
 
 class PostcodeSchema(ma.Schema):
-    addresses = fields.List(fields.Nested('AddressSchema', exclude=['postcode']))
-
 
     class Meta:
         fields = ('postcode','state')

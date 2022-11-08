@@ -14,10 +14,10 @@ class Address(db.Model):
     postcode = db.relationship('Postcode', back_populates='addresses')
 
 class AddressSchema(ma.Schema):
-    # customers = fields.List(fields.Nested('CustomerSchema', exclude=['address']))
-    postcode = fields.List(fields.Nested('PostcodeSchema', exclude=['addresses']))
+    postcode = fields.Nested('PostcodeSchema')
 
 
     class Meta:
-        fields = ('id','street_number', 'street_name', 'suburb', 'postcode','customers')
+        fields = ('id','street_number', 'street_name', 'suburb','postcode_id', 'postcode')
+        ordered = True
         

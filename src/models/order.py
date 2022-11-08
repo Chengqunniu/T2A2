@@ -23,8 +23,10 @@ class OrderSchema(ma.Schema):
     address = fields.List(fields.Nested('AddressSchema', exclude=['customers']))
     shipping_method = fields.List(fields.Nested('ShippingMethodSchema', exclude=['id']))
     order_details = fields.List(fields.Nested('OrderDetailSchema', exclude=['id']))
+    order_status = fields.List(fields.Nested('OrderStatusSchema', exclude=['id']))
+
 
     
     class Meta:
-        fields = ('id', 'order_date', 'ship_date', 'status', 'customer_id', 'shipping_method','order_details')
+        fields = ('id', 'order_date', 'ship_date', 'order_status', 'customer_id', 'shipping_method','order_details')
         

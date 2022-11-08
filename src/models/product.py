@@ -20,7 +20,7 @@ class Product(db.Model):
 
 
 
-class OrderSchema(ma.Schema):
+class ProductSchema(ma.Schema):
     category = fields.List(fields.Nested('CategorySchema', only=['type']))
     reviews = fields.List(fields.Nested('ReviewSchema', exclude=['product_id']))
 

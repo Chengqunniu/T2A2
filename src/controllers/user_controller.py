@@ -5,6 +5,7 @@ from models.user import User, UserSchema
 from models.customer import Customer, CustomerSchema
 from models.address import Address, AddressSchema
 from models.postcode import Postcode, PostcodeSchema
+from models.payment_account import PaymentAccount, PaymentAccountSchema
 from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
@@ -133,7 +134,7 @@ def customer_register():
     except IntegrityError:
         return {'error': 'Customer already exists'}, 409
     
-@user_bp.route('/customer/', methods=['GET'])
+@user_bp.route('/customer/')
 @jwt_required()
 def get_all_customers():
     '''Get information about all customers'''
@@ -215,7 +216,7 @@ def update_one_customer():
 
     return CustomerSchema().dump(customer)
 
-@user_bp.route('/customer/address/', methods=['GET'])
+@user_bp.route('/customer/address/')
 @jwt_required()
 def get_all_addresses():
     '''Get information about all addresses'''
@@ -236,7 +237,7 @@ def get_single_address(address_id):
     else:
         return {'error': f'user not found with id {address_id}'}, 404
 
-@user_bp.route('/customer/address/postcode/', methods=['GET'])
+@user_bp.route('/customer/address/postcode/')
 @jwt_required()
 def get_all_postcodes():
     '''Get information about all postcodes'''
@@ -257,6 +258,53 @@ def get_single_postcode(postcode_id):
     else:
         return {'error': f'user not found with id {postcode_id}'}, 404
 
+@user_bp.route('/customer/payment_account/')
+@jwt_required()
+def get_all_payment_accounts():
+    '''Get information about all payment_accounts'''
+    stmt = db.select(PaymentAccount)
+    payment_accounts = db.session.scalars(stmt)
+    return PaymentAccountSchema(many=True).dump(payment_accounts)
+
+@user_bp.route('/customer/payment_account/<int:payment_account_id>')
+def get_single_payment_account(payment_account_id):
+    '''Get information abobut a specific postcode'''
+    # authorize()
+    stmt = db.select(PaymentAccount).filter_by(id=payment_account_id)
+    payment_account = db.session.scalar(stmt)
+    # If user with postcode_id exists, return its information
+    # If not exists, return error message
+    if payment_account:
+        return PaymentAccountSchema().dump(payment_account)
+    else:
+        return {'error': f'user not found with id {payment_account_id}'}, 404
+
+
+@user_bp.route('/customer/payment_account/', methods=['POST'])
+@jwt_required()
+def create_payment_account():
+    ''' Create new payment_account'''
+    # Create a new PaymentAccount model instance
+    # Request.json returns decode json to dict
+
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+
+    payment_account = PaymentAccount(
+        owner_name = request.json['owner_name'],
+        expire_date = request.json['expire_date'],
+        card_no = request.json['card_no'],
+        security_no = request.json['security_no'],
+        encrypted_card_no = PaymentAccount.encrypt_card_no(request.json['card_no']),
+        customer_id = customer.id 
+    )
+    # Add and commit payment_account to DB
+    db.session.add(payment_account)
+    db.session.commit()
+    # Response back to the client, user marshmallow to serialize data
+    return PaymentAccountSchema().dump(payment_account), 201
 
 # @user_bp.route('/customer/update/address/', methods=['POST'])
 # @jwt_required()

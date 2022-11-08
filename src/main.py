@@ -13,9 +13,9 @@ def create_app():
     def key_error(err):
         return {'error': f'The field {err} is required.'}, 400
 
-    @app.errorhandler(DataError)
-    def data_error(err):
-        return {'error': 'Invalid data input.'}, 400
+    # @app.errorhandler(DataError)
+    # def data_error(err):
+    #     return {'error': 'Invalid data input.'}, 400
 
     @app.errorhandler(404)
     def not_found(err):

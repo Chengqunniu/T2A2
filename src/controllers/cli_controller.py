@@ -129,11 +129,11 @@ def seed_db():
 
     payment_accounts = [
         PaymentAccount(
-            card_no = 1234567890,
+            card_no = '1234567890',
             owner_name = 'John Cleese',
             expire_date = '12/01/2022',
             security_no = 500,
-            encrypted_card_no = PaymentAccount.encrypt_card_no(1234567890),
+            encrypted_card_no = PaymentAccount.encrypt_card_no('1234567890'),
             customer_id=1
         )
     ]

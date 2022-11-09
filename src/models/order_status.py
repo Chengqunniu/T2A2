@@ -5,7 +5,7 @@ class OrderStatus(db.Model):
     __tablename__ = 'order_statues'
     
     id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.String(100), nullable=False)
+    type = db.Column(db.String(100), unique=True, nullable=False)
 
     orders = db.relationship('Order', back_populates='order_status')
 

@@ -208,18 +208,6 @@ def seed_db():
             rating=5,
             customer_id=1,
             product_id=1
-        ),
-        OrderDetail(
-            price=3.0,
-            quantity=3,
-            order_id=1,
-            product_id=2
-        ),
-        OrderDetail(
-            price=3.0,
-            quantity=20,
-            order_id=2,
-            product_id=2
         )
     ]
     db.session.add_all(reviews)

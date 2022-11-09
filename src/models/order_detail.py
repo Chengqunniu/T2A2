@@ -16,7 +16,10 @@ class OrderDetail(db.Model):
 
 
 class OrderDetailSchema(ma.Schema):
+    product = fields.Nested('ProductSchema', only=['id', 'name'])
+    order = fields.Nested('OrderSchema', only=['id'])
 
     class Meta:
-        fields = ('id', 'price', 'quantity')
+        fields = ('id', 'price', 'quantity', 'product', 'order')
+        ordered = True
         

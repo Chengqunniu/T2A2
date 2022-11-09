@@ -2,6 +2,7 @@ from flask import Flask
 from init import db, ma, bcrypt, jwt
 from controllers.cli_controller import db_commands
 from controllers.user_controller import user_bp
+from controllers.order_controller import order_bp
 from sqlalchemy.exc import DataError
 import os
 
@@ -13,9 +14,9 @@ def create_app():
     def key_error(err):
         return {'error': f'The field {err} is required.'}, 400
 
-    # @app.errorhandler(DataError)
-    # def data_error(err):
-    #     return {'error': 'Invalid data input.'}, 400
+    @app.errorhandler(DataError)
+    def data_error(err):
+        return {'error': 'Invalid data input.'}, 400
 
     @app.errorhandler(404)
     def not_found(err):
@@ -36,6 +37,7 @@ def create_app():
 
     app.register_blueprint(db_commands)
     app.register_blueprint(user_bp)
+    app.register_blueprint(order_bp)
 
 
 

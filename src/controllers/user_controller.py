@@ -124,7 +124,8 @@ def customer_register():
     # Request.json returns decode json to dict
         customer = Customer(
             phone = request.json['phone'],
-            user_id = get_jwt_identity()
+            user_id = get_jwt_identity(),
+            address_id = check_address()
         )
     # Add and commit user to DB
         db.session.add(customer)
@@ -134,6 +135,7 @@ def customer_register():
     except IntegrityError:
         return {'error': 'Customer already exists'}, 409
     
+
 @user_bp.route('/customer/')
 @jwt_required()
 def get_all_customers():
@@ -141,6 +143,7 @@ def get_all_customers():
     stmt = db.select(Customer)
     customers = db.session.scalars(stmt)
     return CustomerSchema(many=True).dump(customers)
+
 
 @user_bp.route('/customer/<int:customer_id>/')
 def get_single_customer(customer_id):
@@ -161,7 +164,6 @@ def get_single_customer(customer_id):
 def update_one_customer():
     ''' Update information about a specific customer'''
 
-
     user_id = get_jwt_identity()
     
     stmt = db.select(Customer).filter_by(user_id=user_id)
@@ -169,52 +171,12 @@ def update_one_customer():
 
 
     customer.phone = request.json.get('phone') or customer.phone
-
-
-    data = CustomerSchema().load(request.json)
-    
-    if 'address'in data.keys():
-        new_address = data['address']
-        stmt = db.select(Address).filter_by(street_number=new_address['street_number'], street_name=new_address['street_name'],
-        suburb=new_address['suburb'])
-        address = db.session.scalar(stmt)
-        if address is None:  # Check whether the address already exists
-            
-            # Create a new postcode 
-            postcode = Postcode(
-            postcode= (new_address['postcode'])['postcode'],
-            state = (new_address['postcode'])['state']
-            )
-
-            db.session.add(postcode)
-            db.session.commit()
-            
-
-            # Create a new Address model instance
-            # Request.json returns decode json to dict
-            address = Address(
-            street_number = new_address['street_number'],
-            street_name = new_address['street_name'],
-            suburb = new_address['suburb'],
-            postcode_id = (new_address['postcode'])['postcode']
-            )
-
-
-            # Add and commit user to DB
-            db.session.add(address)
-            db.session.commit()
-    
-            # Response back to the client, user marshmallow to serialize data
-            # return AddressSchema().dump(address), 201
-        
-        customer.address_id = address.id
-    else:
-        customer.address_id = customer.address_id
-
-
+    customer.address_id = check_address()
+ 
     db.session.commit()
 
     return CustomerSchema().dump(customer)
+
 
 @user_bp.route('/customer/address/')
 @jwt_required()
@@ -306,44 +268,6 @@ def create_payment_account():
     # Response back to the client, user marshmallow to serialize data
     return PaymentAccountSchema().dump(payment_account), 201
 
-# @user_bp.route('/customer/update/address/', methods=['POST'])
-# @jwt_required()
-# def update_customer_address():
-    # ''' Update customer's address'''
-
-#     try:
-#     # Create a new Address model instance
-#     # Request.json returns decode json to dict
-#         address = Address(
-#             street_number = data['street_number'],
-#             street_name = data['street_name'],
-#             suburb = data['suburb'],
-#             postcode_id= data['postcode_id']
-#         )
-#     # Add and commit user to DB
-#         db.session.add(address)
-#         db.session.commit()
-        
-        
-#         # suburb=data['suburb'], postcode_id=data['postcode_id'])
-#         # address = db.session.scalar(stmt)
-#         # address_id = address.id
-
-#         # user_id = get_jwt_identity()
-    
-#         # stmt = db.select(Customer).filter_by(user_id=user_id)
-#         # customer = db.session.scalar(stmt)
-#         # customer.address_id = address_id
-
-#     # Response back to the client, user marshmallow to serialize data
-#         return AddressSchema().dump(address), 201
-#     except IntegrityError:
-#         return {'error': 'Customer already exists'}, 409
-
-
-    
-
-
 
 def authorize():
     ''' Authorize user'''
@@ -352,3 +276,60 @@ def authorize():
     user = db.session.scalar(stmt)
     if not user.is_admin:
         abort(401)
+
+def check_address():
+    ''' Check whether address is already in the database
+    If exists, assign the address_id to the customer
+    instead of creating the same address again
+    If not exists, create new address and assign the
+    address_id to the customer'''
+
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+    
+    data = CustomerSchema().load(request.json)
+
+    if 'address'in data.keys():
+        new_address = data['address']
+        stmt = db.select(Address).filter_by(street_number=new_address['street_number'], street_name=new_address['street_name'],
+        suburb=new_address['suburb'])
+        address = db.session.scalar(stmt)
+        if address is None:  # Check whether the address already exists
+            
+            # Create a new postcode 
+            stmt_postcode = db.select(Postcode).filter_by(postcode=(new_address['postcode'])['postcode'])
+            postcode = db.session.scalar(stmt_postcode)
+            if postcode is None:
+                postcode = Postcode(
+                postcode= (new_address['postcode'])['postcode'],
+                state = (new_address['postcode'])['state']
+                )
+
+                db.session.add(postcode)
+                db.session.commit()
+
+
+            # Create a new Address model instance
+            # Request.json returns decode json to dict
+            address = Address(
+            street_number = new_address['street_number'],
+            street_name = new_address['street_name'],
+            suburb = new_address['suburb'],
+            postcode_id = (new_address['postcode'])['postcode']
+            )
+
+
+            # Add and commit user to DB
+            db.session.add(address)
+            db.session.commit()
+    
+            # Response back to the client, user marshmallow to serialize data
+            # return AddressSchema().dump(address), 201
+        
+        return address.id
+    else:
+        return customer.address_id
+
+

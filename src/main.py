@@ -3,6 +3,7 @@ from init import db, ma, bcrypt, jwt
 from controllers.cli_controller import db_commands
 from controllers.user_controller import user_bp
 from controllers.order_controller import order_bp
+from controllers.product_controller import product_bp
 from sqlalchemy.exc import DataError
 import os
 
@@ -38,6 +39,7 @@ def create_app():
     app.register_blueprint(db_commands)
     app.register_blueprint(user_bp)
     app.register_blueprint(order_bp)
+    app.register_blueprint(product_bp)
 
 
 

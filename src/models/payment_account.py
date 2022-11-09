@@ -27,4 +27,4 @@ class PaymentAccountSchema(ma.Schema):
 
     class Meta:
         fields = ('id', 'encrypted_card_no', 'owner_name', 'expire_date', 'security_no', 'customer_id')
-        
+        ordered = True

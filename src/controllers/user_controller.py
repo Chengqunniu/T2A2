@@ -159,24 +159,38 @@ def get_single_customer(customer_id):
         return {'error': f'user not found with id {customer_id}'}, 404
 
 
-@user_bp.route('/customer/update/', methods=['PUT', 'PATCH'])
+@user_bp.route('/customer/update/phone', methods=['PUT', 'PATCH'])
 @jwt_required()
-def update_one_customer():
-    ''' Update information about a specific customer'''
+def update_customer_phone():
+    ''' Update phone about a specific customer'''
 
     user_id = get_jwt_identity()
     
     stmt = db.select(Customer).filter_by(user_id=user_id)
     customer = db.session.scalar(stmt)
 
-
     customer.phone = request.json.get('phone') or customer.phone
-    customer.address_id = check_address()
+
  
     db.session.commit()
 
     return CustomerSchema().dump(customer)
 
+@user_bp.route('/customer/update/address', methods=['PUT', 'PATCH'])
+@jwt_required()
+def update_customer_address():
+    ''' Update address about a specific customer'''
+
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+
+    customer.address_id = check_address()
+ 
+    db.session.commit()
+
+    return CustomerSchema().dump(customer)
 
 @user_bp.route('/customer/address/')
 @jwt_required()
@@ -220,26 +234,51 @@ def get_single_postcode(postcode_id):
     else:
         return {'error': f'user not found with id {postcode_id}'}, 404
 
+@user_bp.route('/customer/address/postcode/', methods=['POST'])
+@jwt_required()
+def create_postcode():
+    '''Create single postcode each time'''
+
+    postcode = Postcode(
+        postcode = request.json['postcode'],
+        state = request.json['state']
+    )
+
+    db.session.add(postcode)
+    db.session.commit()
+    return PostcodeSchema().dump(postcode)
+
+
 @user_bp.route('/customer/payment_account/')
 @jwt_required()
 def get_all_payment_accounts():
     '''Get information about all payment_accounts'''
-    stmt = db.select(PaymentAccount)
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+
+    stmt = db.select(PaymentAccount).filter_by(customer_id=customer.id)
     payment_accounts = db.session.scalars(stmt)
     return PaymentAccountSchema(many=True).dump(payment_accounts)
 
 @user_bp.route('/customer/payment_account/<int:payment_account_id>')
+@jwt_required()
 def get_single_payment_account(payment_account_id):
     '''Get information abobut a specific postcode'''
-    # authorize()
-    stmt = db.select(PaymentAccount).filter_by(id=payment_account_id)
+
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+    stmt = db.select(PaymentAccount).filter_by(id=payment_account_id, customer_id=customer.id)
     payment_account = db.session.scalar(stmt)
     # If user with postcode_id exists, return its information
     # If not exists, return error message
     if payment_account:
         return PaymentAccountSchema().dump(payment_account)
     else:
-        return {'error': f'user not found with id {payment_account_id}'}, 404
+        return {'error': f'Payment Account not found with id {payment_account_id}'}, 404
 
 
 @user_bp.route('/customer/payment_account/', methods=['POST'])
@@ -267,6 +306,25 @@ def create_payment_account():
     db.session.commit()
     # Response back to the client, user marshmallow to serialize data
     return PaymentAccountSchema().dump(payment_account), 201
+
+@user_bp.route('/customer/payment_account/<int:payment_account_id>/', methods=['DELETE'])
+@jwt_required()
+def delete_one_payment_account(payment_account_id):
+    ''' Delete sepecific payment account'''
+    # authorize()  # Only allow admin to delete users
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+
+    stmt = db.select(PaymentAccount).filter_by(id=payment_account_id, customer_id=customer.id)
+    payment_account = db.session.scalar(stmt)
+    if payment_account:
+        db.session.delete(payment_account)
+        db.session.commit()
+        return {'message': f"Customer with id {customer.id}'s payment account with id {payment_account_id} deleted successfully"}
+    else:
+        return {'error': f'Customer with id {customer.id} does not have payment account with id {payment_account_id}'}, 404
 
 
 def authorize():

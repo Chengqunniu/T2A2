@@ -2,6 +2,8 @@ from init import db, ma
 from marshmallow import fields
 
 class PaymentAccount(db.Model):
+    ''' Create payment account model'''
+
     __tablename__ = 'payment_accounts'
     
     id = db.Column(db.Integer, primary_key=True)

@@ -2,6 +2,8 @@ from init import db, ma
 from marshmallow import fields
 
 class ShippingMethod(db.Model):
+    ''' Create shipping_Method model'''
+
     __tablename__ = 'shipping_methods'
     
     id = db.Column(db.Integer, primary_key=True)

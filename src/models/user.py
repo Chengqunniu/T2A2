@@ -3,6 +3,7 @@ from marshmallow import fields
 
 class User(db.Model):
     '''Create a user model'''
+    
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)

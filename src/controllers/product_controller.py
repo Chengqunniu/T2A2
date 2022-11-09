@@ -3,6 +3,7 @@ from init import db
 from flask_jwt_extended import jwt_required
 from models.product import Product, ProductSchema
 from models.category import Category, CategorySchema
+from models.review import Review, ReviewSchema
 from sqlalchemy.exc import IntegrityError
 from datetime import date
 
@@ -170,3 +171,43 @@ def delete_category(category_id):
         return {'message': f"Category with id:{category.id}'deleted successfully"}
     else:
         return {'error': f'Product not found with id {category_id}'}, 404
+
+@product_bp.route('/review/')
+@jwt_required()
+def get_all_reviews():
+    '''Get information of all reviews'''
+    stmt = db.select(Review)
+    reviews = db.session.scalars(stmt)
+    return ReviewSchema(many=True).dump(reviews) 
+
+
+@product_bp.route('/review/<int:review_id>/')
+@jwt_required()
+def get_single_review(review_id):
+    '''Get review information about a specific product'''
+    stmt = db.select(Review).filter_by(id=review_id)
+    review = db.session.scalar(stmt)
+    if review:
+        return ReviewSchema().dump(review) 
+    else:
+        return {'error': f'Review not found with id {review_id}'}, 404
+
+    
+@product_bp.route('/review/customer/<int:review_id>/', methods=['DELETE'])
+@jwt_required()
+def delete_one_payment_account(payment_account_id):
+    ''' Delete sepecific payment account'''
+    # authorize()  # Only allow admin to delete users
+    user_id = get_jwt_identity()
+    
+    stmt = db.select(Customer).filter_by(user_id=user_id)
+    customer = db.session.scalar(stmt)
+
+    stmt = db.select(PaymentAccount).filter_by(id=payment_account_id, customer_id=customer.id)
+    payment_account = db.session.scalar(stmt)
+    if payment_account:
+        db.session.delete(payment_account)
+        db.session.commit()
+        return {'message': f"Customer with id {customer.id}'s payment account with id {payment_account_id} deleted successfully"}
+    else:
+        return {'error': f'Customer with id {customer.id} does not have payment account with id {payment_account_id}'}, 404

@@ -8,7 +8,7 @@ from models.order_status import OrderStatus
 from models.shipping_method import ShippingMethod
 from models.address import Address
 from models.customer import Customer
-from models.payment_account import PaymentAccount, PaymentAccountSchema
+from models.payment_account import PaymentAccount
 from models.order import Order
 from models.product import Product
 from models.order_detail import OrderDetail
@@ -16,7 +16,7 @@ from models.review import Review
 
 
 
-db_commands = Blueprint('db', __name__)
+db_commands = Blueprint('db', __name__)  # Create blueprint for cli commands
 
 
 @db_commands.cli.command('create')
@@ -33,12 +33,14 @@ def drop_db():
 
 @db_commands.cli.command('seed')
 def seed_db():
-    ''' Seed tables'''
+    ''' Seed tables with data'''
+
+    # Seed users
     users = [
         User(
             first_name='John',
             last_name='Cleese',
-            password=bcrypt.generate_password_hash('123').decode('utf-8'),#originally hashing return hexadecimal, it is better to use utf8
+            password=bcrypt.generate_password_hash('123').decode('utf-8'),  # Originally hashing return hexadecimal, it is better to use utf8
             is_admin=True,
             email='admin@spam.com'
         ),
@@ -52,6 +54,7 @@ def seed_db():
     db.session.add_all(users)
     db.session.commit()
 
+    # Seed postcodes
     postcodes = [
         Postcode(
             postcode=3000,
@@ -65,6 +68,7 @@ def seed_db():
     db.session.add_all(postcodes)
     db.session.commit()
 
+    # Seed categories
     categories = [
         Category(
             type='sticker sheet'
@@ -76,6 +80,7 @@ def seed_db():
     db.session.add_all(categories)
     db.session.commit()
 
+    # Seed order_statues
     order_statues = [
         OrderStatus(
             type='received'
@@ -87,6 +92,7 @@ def seed_db():
     db.session.add_all(order_statues)
     db.session.commit()
 
+    # Seed shipping_methods
     shipping_methods = [
         ShippingMethod(
             type='standard',
@@ -100,6 +106,7 @@ def seed_db():
     db.session.add_all(shipping_methods)
     db.session.commit()
 
+    # Seed addresses
     addresses = [
         Address(
             street_number=1,
@@ -117,6 +124,7 @@ def seed_db():
     db.session.add_all(addresses)
     db.session.commit()
 
+    # Seed customers
     customers = [
         Customer(
             phone=1234565,
@@ -127,6 +135,7 @@ def seed_db():
     db.session.add_all(customers)
     db.session.commit()
 
+    # Seed payment_accounts
     payment_accounts = [
         PaymentAccount(
             card_no = '1234567890',
@@ -140,6 +149,7 @@ def seed_db():
     db.session.add_all(payment_accounts)
     db.session.commit()
 
+    # Seed orders
     orders = [
         Order(
             order_date=date.today(),
@@ -159,6 +169,7 @@ def seed_db():
     db.session.add_all(orders)
     db.session.commit()
 
+    # Seed products
     products = [
         Product(
             name='Payful PeterPan',
@@ -179,6 +190,7 @@ def seed_db():
     db.session.add_all(products)
     db.session.commit()
 
+    # Seed order_details
     order_details = [
         OrderDetail(
             price=5.0,
@@ -202,6 +214,7 @@ def seed_db():
     db.session.add_all(order_details)
     db.session.commit()
 
+    # Seed reviews
     reviews = [
         Review(
             comment='Love it!',
@@ -212,8 +225,4 @@ def seed_db():
     ]
     db.session.add_all(reviews)
     db.session.commit()
-# @db_commands.route('/')
-# def get_all_payment_accounts():
-#     stmt = db.select(PaymentAccount)
-#     payment_account = db.session.scalar(stmt)
-#     return PaymentAccountSchema().dump(payment_account)
+    

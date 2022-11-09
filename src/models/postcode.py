@@ -2,6 +2,8 @@ from init import db, ma
 from marshmallow import fields
 
 class Postcode(db.Model):
+    ''' Create postcode model'''
+
     __tablename__ = 'postcodes'
     
     postcode = db.Column(db.Integer, primary_key=True)

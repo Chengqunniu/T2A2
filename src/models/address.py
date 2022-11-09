@@ -2,6 +2,7 @@ from init import db, ma
 from marshmallow import fields
 
 class Address(db.Model):
+    '''Create address model'''
     __tablename__ = 'addresses'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -14,6 +15,7 @@ class Address(db.Model):
     postcode = db.relationship('Postcode', back_populates='addresses')
 
 class AddressSchema(ma.Schema):
+    ''' Schema for address'''
     postcode = fields.Nested('PostcodeSchema')
 
 

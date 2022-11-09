@@ -1,7 +1,8 @@
 from init import db, ma
-from marshmallow import fields
 
 class Category(db.Model):
+    ''' Create category model'''
+
     __tablename__ = 'categories'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -12,6 +13,7 @@ class Category(db.Model):
 
 
 class CategorySchema(ma.Schema):
+    ''' Schema for category'''
 
     class Meta:
         fields = ('id', 'type')

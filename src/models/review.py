@@ -6,6 +6,8 @@ from marshmallow.validate import Regexp
 VALID_RATINGS = (1, 2, 3, 4, 5)
 
 class Review(db.Model):
+    ''' Create review model'''
+
     __tablename__ = 'reviews'
     
     id = db.Column(db.Integer, primary_key=True)

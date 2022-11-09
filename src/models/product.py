@@ -2,6 +2,8 @@ from init import db, ma
 from marshmallow import fields
 
 class Product(db.Model):
+    ''' Create product model'''
+
     __tablename__ = 'products'
     
     id = db.Column(db.Integer, primary_key=True)

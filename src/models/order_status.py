@@ -2,6 +2,8 @@ from init import db, ma
 from marshmallow import fields
 
 class OrderStatus(db.Model):
+    ''' Create order_status model'''
+
     __tablename__ = 'order_statues'
     
     id = db.Column(db.Integer, primary_key=True)

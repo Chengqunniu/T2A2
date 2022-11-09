@@ -8,29 +8,36 @@ from models.product import Product
 from models.order_detail import OrderDetail, OrderDetailSchema
 from models.order_status import OrderStatus, OrderStatusSchema
 from models.shipping_method import ShippingMethod, ShippingMethodSchema
+from controllers.user_controller import authorize
 from sqlalchemy.exc import IntegrityError
 
 
     
-order_bp = Blueprint('order', __name__, url_prefix='/order')
+order_bp = Blueprint('order', __name__, url_prefix='/order')  # create blueprint for order controller
 
 @order_bp.route('/')
 @jwt_required()
 def get_all_orders():
-    '''Get information about all orders, only allowed for admin'''
-    # authorize()
-    stmt = db.select(Order)
-    orders = db.session.scalars(stmt)
+    '''Allow admin user to check information for all orders'''
+
+    authorize()  # Only allow admin user to check information
+
+    stmt = db.select(Order)  # Create SQL statement : select all orders
+    orders = db.session.scalars(stmt)  # Return all orders
     return OrderSchema(many=True, exclude=['shipping_method_id']).dump(orders) 
 
 
 @order_bp.route('/<int:order_id>/')
 @jwt_required()
 def get_single_order(order_id):
-    '''Get information about a specific order, only allowed for admin'''
-    # authorize()
-    stmt = db.select(Order).filter_by(id=order_id)
-    order = db.session.scalar(stmt)
+    '''Allow admin user to check information for single order'''
+
+    authorize()  # Only allow admin user to check information
+
+    stmt = db.select(Order).filter_by(id=order_id)  # Create SQL statement : select order by using order_id entered
+    order = db.session.scalar(stmt)  # Return the order
+    # If order has been found, display the order information
+    # If order not found, return the error message
     if order:
         return OrderSchema(exclude=['shipping_method_id']).dump(order) 
     else:
@@ -40,39 +47,43 @@ def get_single_order(order_id):
 @order_bp.route('/customer/')
 @jwt_required()
 def get_all_orders_for_specific_customer():
-    '''Get information about all orders for the logged in customer only'''
-    user_id = get_jwt_identity()
-    stmt = db.select(Customer).filter_by(user_id=user_id)
-    customer = db.session.scalar(stmt)
+    '''Get information of all orders that belongs to the logged in customer'''
+    user_id = get_jwt_identity()  # Get the user_id
+    stmt = db.select(Customer).filter_by(user_id=user_id)  # Create SQL statement : select customer by using the user_id
+    customer = db.session.scalar(stmt)  # Return the customer
 
-    stmt = db.select(Order).filter_by(customer_id=customer.id)
-    orders = db.session.scalars(stmt)
+    stmt = db.select(Order).filter_by(customer_id=customer.id)  # Create SQL statement : select orders belongs to the customer by using the customer_id
+    orders = db.session.scalars(stmt)  # Return orders for the customer
     return OrderSchema(many=True, exclude=['shipping_method_id']).dump(orders) 
 
 @order_bp.route('/customer/', methods=['POST'])
 @jwt_required()
 def create_order():
-    '''Get information about all orders for the logged in customer only'''
-    user_id = get_jwt_identity()
-    stmt = db.select(Customer).filter_by(user_id=user_id)
-    customer = db.session.scalar(stmt)
+    '''Create order for the customer'''
+    user_id = get_jwt_identity()  # Get the user_id
+    stmt = db.select(Customer).filter_by(user_id=user_id)  # Create SQL statement : select customer by using the user_id
+    customer = db.session.scalar(stmt)  # Return the customer
 
-    order_date = OrderSchema().load(request.json)
+    order_data = OrderSchema().load(request.json)  # Use orderschema to sanitise and validate data
 
+    # Create a new order
     order = Order(
         order_date = date.today(),
         customer_id = customer.id,
-        shipping_method_id = order_date['shipping_method_id']
+        shipping_method_id = order_data['shipping_method_id']
         )
 
     db.session.add(order)
     db.session.commit()
 
-    for each_order in order_date['order_details']:
+    # User for loop to get product name, using the name to select the product
+    # And obtain the product id
+    for each_order in order_data['order_details']:
         product_entered = each_order['product']
-        stmt = db.select(Product).filter_by(name=product_entered['name'])
+        stmt = db.select(Product).filter_by(name=product_entered['name']) 
         product = db.session.scalar(stmt)
 
+        # Create a new orderdetail
         order_detail = OrderDetail(
             price = each_order['price'],
             quantity = each_order['quantity'],
@@ -88,20 +99,22 @@ def create_order():
 @order_bp.route('/detail/')
 @jwt_required()
 def get_all_details():
-    '''Get information about all order details, only allowed for admin'''
-    # authorize()
-    stmt = db.select(OrderDetail)
-    order_details = db.session.scalars(stmt)
+    '''Allow admin user to get all order details'''
+    authorize()
+    stmt = db.select(OrderDetail)  # Create SQL statement : select all order_details
+    order_details = db.session.scalars(stmt)  # Return all order_details
     return OrderDetailSchema(many=True).dump(order_details) 
 
 
 @order_bp.route('/detail/<int:order_detail_id>/')
 @jwt_required()
 def get_single_order_detail(order_detail_id):
-    '''Get information about a specific order detail, only allowed for admin'''
-    # authorize()
-    stmt = db.select(OrderDetail).filter_by(id=order_detail_id)
-    order_detail = db.session.scalar(stmt)
+    '''Allow admin user to get single order detail'''
+    authorize()
+    stmt = db.select(OrderDetail).filter_by(id=order_detail_id)  # Create SQL statement : select order_detail by using order_detail id entered
+    order_detail = db.session.scalar(stmt)  # Return the order_detail
+    # If order_detail exists, return the information of it
+    # If not exists, return error message
     if order_detail:
         return OrderDetailSchema().dump(order_detail) 
     else:
@@ -111,20 +124,22 @@ def get_single_order_detail(order_detail_id):
 @order_bp.route('/status/')
 @jwt_required()
 def get_all_order_statues():
-    '''Get information about all order statues, only allowed for admin'''
-    # authorize()
-    stmt = db.select(OrderStatus)
-    order_statues = db.session.scalars(stmt)
+    '''Allow admin user to get all order statues'''
+    authorize()
+    stmt = db.select(OrderStatus)  # Create SQL statement : select all order statuses
+    order_statues = db.session.scalars(stmt)  #  Return order_statues
     return OrderStatusSchema(many=True).dump(order_statues) 
 
 
 @order_bp.route('/status/<int:order_status_id>/')
 @jwt_required()
 def get_single_order_status(order_status_id):
-    '''Get information about a specific order, only allowed for admin'''
-    # authorize()
-    stmt = db.select(OrderStatus).filter_by(id=order_status_id)
-    order_status = db.session.scalar(stmt)
+    '''Allow admin user to get a single order status'''
+    authorize()
+    stmt = db.select(OrderStatus).filter_by(id=order_status_id)  # Create SQL statement : select order status using the order_status id entered
+    order_status = db.session.scalar(stmt)  # Return the order_status
+    # If order_status exists, return the information of the order_status
+    # If not exists, return error message
     if order_status:
         return OrderStatusSchema().dump(order_status) 
     else:

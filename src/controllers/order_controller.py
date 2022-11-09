@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from init import db, bcrypt
+from init import db
 from datetime import date
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from models.order import Order, OrderSchema
@@ -35,7 +35,6 @@ def get_single_order(order_id):
         return OrderSchema(exclude=['shipping_method_id']).dump(order) 
     else:
         return {'error': f'order not found with id {order_id}'}, 404
-
 
 
 @order_bp.route('/customer/')
@@ -156,7 +155,7 @@ def create_order_statues():
 
 @order_bp.route('/status/<int:order_status_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
-def update_one_user(order_status_id):
+def update_order_status(order_status_id):
     ''' Update information about a specific user'''
     stmt = db.select(OrderStatus).filter_by(id=order_status_id)
     order_status = db.session.scalar(stmt)
@@ -173,7 +172,7 @@ def update_one_user(order_status_id):
 
 @order_bp.route('/status/<int:order_status_id>/', methods=['DELETE'])
 @jwt_required()
-def delete_one_user(order_status_id):
+def delete_order_status(order_status_id):
     ''' Delete sepecific user'''
     # authorize()  # Only allow admin to delete users
 

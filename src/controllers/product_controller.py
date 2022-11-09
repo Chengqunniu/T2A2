@@ -6,8 +6,6 @@ from models.category import Category, CategorySchema
 from sqlalchemy.exc import IntegrityError
 from datetime import date
 
-
-
     
 product_bp = Blueprint('product', __name__, url_prefix='/product')
 

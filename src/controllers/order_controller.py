@@ -234,35 +234,37 @@ def create_shiping_methods():
         return {'error': 'Shipping Method type already in use'}, 409
 
 
-@order_bp.route('/status/<int:order_status_id>', methods=['PUT', 'PATCH'])
+@order_bp.route('/shipping/<int:shipping_method_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
-def update_one_user(order_status_id):
+def update_one_shipping_method(shipping_method_id):
     ''' Update information about a specific user'''
-    stmt = db.select(OrderStatus).filter_by(id=order_status_id)
-    order_status = db.session.scalar(stmt)
+    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)
+    shipping_method = db.session.scalar(stmt)
 
-    if order_status:
-        order_status.type = request.json.get('type') or order_status.type
+    if shipping_method:
+        shipping_method.type = request.json.get('type') or shipping_method.type
+        shipping_method.price = request.json.get('price') or shipping_method.price
 
         db.session.commit()
 
-        return OrderStatusSchema().dump(order_status)
+        return OrderStatusSchema().dump(shipping_method)
     else:
-        return {'error': f'order_status not found with id {order_status_id}'}, 404
+        return {'error': f'Shipping method not found with id {shipping_method_id}'}, 404
 
 
-@order_bp.route('/status/<int:order_status_id>/', methods=['DELETE'])
+@order_bp.route('/shipping/<int:shipping_method_id>/', methods=['DELETE'])
 @jwt_required()
-def delete_one_user(order_status_id):
-    ''' Delete sepecific user'''
+def delete_one_shipping_method(shipping_method_id):
+    ''' Delete sepecific shipping method'''
     # authorize()  # Only allow admin to delete users
 
-    stmt = db.select(OrderStatus).filter_by(id=order_status_id)
-    order_status = db.session.scalar(stmt)
+    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)
+    shipping_method = db.session.scalar(stmt)
 
-    if order_status:
-        db.session.delete(order_status)
+    if shipping_method:
+        db.session.delete(shipping_method)
         db.session.commit()
-        return {'message': f"Order status with id:{order_status.id}', type:'{order_status.type}' deleted successfully"}
+        return {'message': f"Shipping method with id:{shipping_method.id}', type:'{shipping_method.type}', "
+        f"price: {shipping_method.price} deleted successfully"}
     else:
-        return {'error': f'Order status not found with id {order_status_id}'}, 404
+        return {'error': f'Shipping method not found with id {shipping_method_id}'}, 404

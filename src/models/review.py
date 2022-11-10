@@ -25,8 +25,12 @@ class ReviewSchema(ma.Schema):
     rating = fields.Integer(strict=True, required=True, validate=
         OneOf(VALID_RATINGS, error='Only numbers 1 to 5')
     )
+    comment = fields.String(strict=True, required=True)
+    customer_id = fields.Integer(strict=True)
+    product_id = fields.Integer(strict=True)
     
     class Meta:
         fields = ('id', 'comment', 'rating', 'customer_id', 'product_id')
-        ordered = True
+        ordered = True # Display data in the order as listed in the fields above
+        
         

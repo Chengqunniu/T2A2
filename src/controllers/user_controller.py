@@ -40,30 +40,37 @@ def get_single_user(user_id):
 @jwt_required()
 def update_one_user():
     ''' Update information about a specific user'''
+
+    data = UserSchema().load(request.json)
+
     user_id = get_jwt_identity()
     stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
 
-    user.first_name = request.json.get('first_name') or user.first_name
-    user.last_name = request.json.get('last_name') or user.last_name
-    if request.json.get('password') == None:
-        user.password = user.password
-    else:
-        user.password = bcrypt.generate_password_hash(request.json.get('password')).decode('utf8')
-    user.email = request.json.get('email') or user.email
+    if 'first_name' in data.keys():
+        user.first_name = data['first_name'] or user.first_name
+    if 'last_name' in data.keys():
+        user.last_name = data['last_name'] or user.last_name
+    if 'password' in data.keys():
+        if data['password'] is None:
+            user.password = user.password
+        else:
+            user.password = bcrypt.generate_password_hash(data['password']).decode('utf8')
+    if 'email' in data.keys():
+        user.email = data['email'] or user.email
 
     db.session.commit()
 
     return UserSchema().dump(user)
 
 
-@user_bp.route('/<int:id>/', methods=['DELETE'])
+@user_bp.route('/<int:user_id>/', methods=['DELETE'])
 @jwt_required()
-def delete_one_user(id):
+def delete_one_user(user_id):
     ''' Delete sepecific user'''
     authorize()  # Only allow admin to delete users
 
-    stmt = db.select(User).filter_by(id=id)
+    stmt = db.select(User).filter_by(id=user_id)
     user = db.session.scalar(stmt)
     if user:
         db.session.delete(user)
@@ -77,14 +84,16 @@ def delete_one_user(id):
 def user_register():
     ''' Register new user'''
     # Error handling if email already registered
+    data = UserSchema().load(request.json)
+
     try:
     # Create a new User model instance
     # Request.json returns decode json to dict
         user = User(
-            first_name = request.json['first_name'],
-            last_name = request.json['last_name'],
-            password = bcrypt.generate_password_hash(request.json['password']).decode('utf8'),
-            email = request.json['email']
+            first_name = data['first_name'],
+            last_name = data['last_name'],
+            password = bcrypt.generate_password_hash(data['password']).decode('utf8'),
+            email = data['email']
         )
     # Add and commit user to DB
         db.session.add(user)
@@ -98,6 +107,7 @@ def user_register():
 @user_bp.route('/login/', methods=['POST'])
 def user_login():
     ''' Login the user'''
+
     # First check whether user exist
     stmt = db.select(User).filter_by(email=request.json['email'])
     user = db.session.scalar(stmt)
@@ -118,22 +128,25 @@ def user_login():
 @jwt_required()
 def customer_register():
     ''' Register new customer'''
+
+    data = CustomerSchema().load(request.json)
+
     # Error handling if phone number already registered
     try:
     # Create a new Customer model instance
     # Request.json returns decode json to dict
         customer = Customer(
-            phone = request.json['phone'],
+            phone = data['phone'],
             user_id = get_jwt_identity(),
-            address_id = check_address()
+            address_id = data['address_id']
         )
     # Add and commit user to DB
         db.session.add(customer)
         db.session.commit()
     # Response back to the client, user marshmallow to serialize data
-        return CustomerSchema().dump(customer), 201
+        return CustomerSchema(exclude='address_id').dump(customer), 201
     except IntegrityError:
-        return {'error': 'Customer already exists'}, 409
+        return {'error': 'Address id does not exists'}, 409
     
 
 @user_bp.route('/customer/')
@@ -142,7 +155,7 @@ def get_all_customers():
     '''Get information about all customers'''
     stmt = db.select(Customer)
     customers = db.session.scalars(stmt)
-    return CustomerSchema(many=True).dump(customers)
+    return CustomerSchema(many=True, exclude='address_id').dump(customers)
 
 
 @user_bp.route('/customer/<int:customer_id>/')
@@ -154,7 +167,7 @@ def get_single_customer(customer_id):
     # If user with customer_id exists, return its information
     # If not exists, return error message
     if customer:
-        return CustomerSchema().dump(customer)
+        return CustomerSchema(exclude='address_id').dump(customer)
     else:
         return {'error': f'user not found with id {customer_id}'}, 404
 
@@ -164,17 +177,20 @@ def get_single_customer(customer_id):
 def update_customer_phone():
     ''' Update phone about a specific customer'''
 
+    data = CustomerSchema().load(request.json)
+
+
     user_id = get_jwt_identity()
     
     stmt = db.select(Customer).filter_by(user_id=user_id)
     customer = db.session.scalar(stmt)
 
-    customer.phone = request.json.get('phone') or customer.phone
+    customer.phone = data['phone'] or customer.phone
 
  
     db.session.commit()
 
-    return CustomerSchema().dump(customer)
+    return CustomerSchema(exclude='address_id').dump(customer)
 
 @user_bp.route('/customer/update/address', methods=['PUT', 'PATCH'])
 @jwt_required()
@@ -190,7 +206,7 @@ def update_customer_address():
  
     db.session.commit()
 
-    return CustomerSchema().dump(customer)
+    return CustomerSchema(exclude='address_id').dump(customer)
 
 @user_bp.route('/customer/address/')
 @jwt_required()
@@ -239,14 +255,18 @@ def get_single_postcode(postcode_id):
 def create_postcode():
     '''Create single postcode each time'''
 
-    postcode = Postcode(
-        postcode = request.json['postcode'],
-        state = request.json['state']
-    )
+    data = PostcodeSchema().load(request.json)
+    try:
+        postcode = Postcode(
+            postcode = data['postcode'],
+            state = data['state']
+            )
 
-    db.session.add(postcode)
-    db.session.commit()
-    return PostcodeSchema().dump(postcode)
+        db.session.add(postcode)
+        db.session.commit()
+        return PostcodeSchema().dump(postcode)
+    except IntegrityError:
+        return {'error': f'Postcode {postcode.postcode} already exists.'}
 
 
 @user_bp.route('/customer/payment_account/')
@@ -260,7 +280,7 @@ def get_all_payment_accounts():
 
     stmt = db.select(PaymentAccount).filter_by(customer_id=customer.id)
     payment_accounts = db.session.scalars(stmt)
-    return PaymentAccountSchema(many=True).dump(payment_accounts)
+    return PaymentAccountSchema(many=True, exclude='card_no').dump(payment_accounts)
 
 @user_bp.route('/customer/payment_account/<int:payment_account_id>')
 @jwt_required()
@@ -276,7 +296,7 @@ def get_single_payment_account(payment_account_id):
     # If user with postcode_id exists, return its information
     # If not exists, return error message
     if payment_account:
-        return PaymentAccountSchema().dump(payment_account)
+        return PaymentAccountSchema(exclude='card_no').dump(payment_account)
     else:
         return {'error': f'Payment Account not found with id {payment_account_id}'}, 404
 
@@ -287,25 +307,29 @@ def create_payment_account():
     ''' Create new payment_account'''
     # Create a new PaymentAccount model instance
     # Request.json returns decode json to dict
+    data = PaymentAccountSchema().load(request.json)
 
     user_id = get_jwt_identity()
     
     stmt = db.select(Customer).filter_by(user_id=user_id)
     customer = db.session.scalar(stmt)
-
-    payment_account = PaymentAccount(
-        owner_name = request.json['owner_name'],
-        expire_date = request.json['expire_date'],
-        card_no = request.json['card_no'],
-        security_no = request.json['security_no'],
-        encrypted_card_no = PaymentAccount.encrypt_card_no(request.json['card_no']),
-        customer_id = customer.id 
-    )
-    # Add and commit payment_account to DB
-    db.session.add(payment_account)
-    db.session.commit()
-    # Response back to the client, user marshmallow to serialize data
-    return PaymentAccountSchema().dump(payment_account), 201
+    try:
+        payment_account = PaymentAccount(
+            owner_name = data['owner_name'],
+            expire_date = data['expire_date'],
+            card_no = data['card_no'],
+            security_no = data['security_no'],
+            encrypted_card_no = PaymentAccount.encrypt_card_no(data['card_no']),
+            customer_id = customer.id 
+        )
+        # Add and commit payment_account to DB
+        db.session.add(payment_account)
+        db.session.commit()
+        # Response back to the client, user marshmallow to serialize data
+        return PaymentAccountSchema(exclude='card_no').dump(payment_account), 201
+    except IntegrityError:
+        return {'error': f'Card number already exists.'}
+        
 
 @user_bp.route('/customer/payment_account/<int:payment_account_id>/', methods=['DELETE'])
 @jwt_required()
@@ -342,43 +366,21 @@ def check_address():
     If not exists, create new address and assign the
     address_id to the customer'''
 
-    user_id = get_jwt_identity()
-    
-    stmt = db.select(Customer).filter_by(user_id=user_id)
-    customer = db.session.scalar(stmt)
-    
-    data = CustomerSchema().load(request.json)
+    data = AddressSchema().load(request.json)
 
-    if 'address'in data.keys():
-        new_address = data['address']
-        stmt = db.select(Address).filter_by(street_number=new_address['street_number'], street_name=new_address['street_name'],
-        suburb=new_address['suburb'])
-        address = db.session.scalar(stmt)
-        if address is None:  # Check whether the address already exists
+    stmt = db.select(Address).filter_by(street_number=data['street_number'], street_name=data['street_name'],
+    suburb=data['suburb'], postcode_id=data['postcode_id'])
+    address = db.session.scalar(stmt)
+    if address is None:  # Check whether the address already exists
             
-            # Create a new postcode 
-            stmt_postcode = db.select(Postcode).filter_by(postcode=(new_address['postcode'])['postcode'])
-            postcode = db.session.scalar(stmt_postcode)
-            if postcode is None:
-                postcode = Postcode(
-                postcode= (new_address['postcode'])['postcode'],
-                state = (new_address['postcode'])['state']
-                )
-
-                db.session.add(postcode)
-                db.session.commit()
-
-
             # Create a new Address model instance
             # Request.json returns decode json to dict
             address = Address(
-            street_number = new_address['street_number'],
-            street_name = new_address['street_name'],
-            suburb = new_address['suburb'],
-            postcode_id = (new_address['postcode'])['postcode']
+            street_number = data['street_number'],
+            street_name = data['street_name'],
+            suburb = data['suburb'],
+            postcode_id = data['postcode_id']
             )
-
-
             # Add and commit user to DB
             db.session.add(address)
             db.session.commit()
@@ -386,8 +388,7 @@ def check_address():
             # Response back to the client, user marshmallow to serialize data
             # return AddressSchema().dump(address), 201
         
-        return address.id
-    else:
-        return customer.address_id
+    return address.id
+
 
 

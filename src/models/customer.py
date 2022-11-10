@@ -1,5 +1,6 @@
 from init import db, ma
-from marshmallow import fields
+from marshmallow import fields, validates
+from marshmallow.exceptions import ValidationError
 
 class Customer(db.Model):
     ''' Create customer model'''
@@ -22,13 +23,24 @@ class Customer(db.Model):
 class CustomerSchema(ma.Schema):
     address = fields.Nested('AddressSchema')
     user = fields.Nested('UserSchema', only=['id', 'first_name', 'last_name'])
+    phone = fields.Integer(strict=True, required=True)
+    address_id = fields.Integer(strict=True)
+    user_id = fields.Integer(strict=True, required=True)
 
     payment_accounts = fields.List(fields.Nested('PaymentAccountSchema', only=['encrypted_card_no']))
     orders = fields.List(fields.Nested('OrderSchema', exclude=['payment_account', 'customer_id']))
     reviews = fields.List(fields.Nested('ReviewSchema', exclude=['customer_id']))
 
+    @validates('phone')
+    def validate_phone(self, value):
+
+        stmt = db.select(db.func.count()).select_from(Customer).filter_by(phone=value)
+        count = db.session.scalar(stmt)
+        if count > 0:
+            raise ValidationError('Phone number has already been used')
 
     class Meta:
-        fields = ('id', 'phone', 'address', 'user')
-        ordered = True
+        fields = ('id', 'phone', 'address', 'user', 'address_id')
+        ordered = True # Display data in the order as listed in the fields above
+
         

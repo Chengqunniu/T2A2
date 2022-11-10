@@ -1,5 +1,7 @@
 from init import db, ma
-from marshmallow import fields
+from marshmallow import fields, validates
+from marshmallow.exceptions import ValidationError
+
 
 class Product(db.Model):
     ''' Create product model'''
@@ -26,8 +28,31 @@ class ProductSchema(ma.Schema):
     category = fields.Nested('CategorySchema', only=['type'])
     reviews = fields.List(fields.Nested('ReviewSchema', exclude=['product_id']))
 
-    
+    description = fields.String(strict=True)
+    price = fields.Float(strict=True, required=True)
+    stock = fields.Integer(strict=True, required=True)
+    create_date = fields.Date(strict=True)
+    category_id = fields.Integer(strict=True)
+
+    @validates('name')
+    def validate_name(self, value):
+        try:
+            value = float(value)
+            raise ValidationError('You have to enter characters for the product name.')
+        except ValueError:
+            if any(letter.isdigit() for letter in value):
+                raise ValidationError('Product name must not contain numbers.')
+            else:
+                stmt = db.select(db.func.count()).select_from(Product).filter_by(name=value)
+                count = db.session.scalar(stmt)
+                if count > 0:
+                    raise ValidationError('Product name has already been used')
+
+
+
+
     class Meta:
-        fields = ('id', 'name', 'description', 'price', 'stock', 'create_date', 'category')
-        ordered = True
+        fields = ('id', 'name', 'description', 'price', 'stock', 'create_date', 'category', 'category_id')
+        ordered = True # Display data in the order as listed in the fields above
+        
         

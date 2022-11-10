@@ -1,5 +1,7 @@
 from init import db, ma
-from marshmallow import fields
+from marshmallow import fields, validates
+from marshmallow.validate import Range, Length
+from marshmallow.exceptions import ValidationError
 
 class PaymentAccount(db.Model):
     ''' Create payment account model'''
@@ -26,7 +28,22 @@ class PaymentAccount(db.Model):
 
 class PaymentAccountSchema(ma.Schema):
 
+    card_no = fields.String(strict=True, required=True, validate=
+        Length(equal=16, error='card_no must be 16 digits long.'))
+    expire_date = fields.String(strict=True, required=True)
+    security_no = fields.Integer(strict=True, required=True, validate=
+        Range(min=3,max=3, error='security_no must be 3 digits long.'))
+    
+    @validates('owner_name')
+    def validate_owner_name(self, value):
+        try:
+            value = float(value)
+            raise ValidationError('You have to enter characters in the owner_name.')
+        except ValueError:
+            if any(letter.isdigit() for letter in value):
+                raise ValidationError('Owner_name must not contain numbers.')
 
     class Meta:
-        fields = ('id', 'encrypted_card_no', 'owner_name', 'expire_date', 'security_no', 'customer_id')
-        ordered = True
+        fields = ('id', 'encrypted_card_no', 'owner_name', 'expire_date', 'security_no', 'customer_id', 'card_no')
+        ordered = True # Display data in the order as listed in the fields above
+        

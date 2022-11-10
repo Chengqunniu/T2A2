@@ -1,5 +1,8 @@
 from init import db, ma
-from marshmallow import fields
+from marshmallow import fields, validates
+from marshmallow.validate import Regexp, OneOf, And
+from marshmallow.exceptions import ValidationError
+
 
 class Address(db.Model):
     '''Create address model'''
@@ -16,10 +19,34 @@ class Address(db.Model):
 
 class AddressSchema(ma.Schema):
     ''' Schema for address'''
+
     postcode = fields.Nested('PostcodeSchema')
+    street_number = fields.Integer(strict=True, required=True)
+    postcode_id = fields.Integer(strict=True, required=True)
+ 
+
+    @validates('street_name')
+    def validate_street_name(self, value):
+        try:
+            value = float(value)
+            raise ValidationError('You have to enter characters in the street name.')
+        except ValueError:
+            if any(letter.isdigit() for letter in value):
+                raise ValidationError('Street_name must not contain numbers.')
+
+    @validates('suburb')
+    def validate_suburb(self, value):
+        try:
+            value = float(value)
+            raise ValidationError('You have to enter characters in the street name.')
+        except ValueError:
+            if any(letter.isdigit() for letter in value):
+                raise ValidationError('Street_name must not contain numbers.')
+
 
 
     class Meta:
         fields = ('id','street_number', 'street_name', 'suburb','postcode_id', 'postcode')
-        ordered = True
+        ordered = True # Display data in the order as listed in the fields above
+
         

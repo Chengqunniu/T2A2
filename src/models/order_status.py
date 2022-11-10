@@ -1,5 +1,6 @@
 from init import db, ma
-from marshmallow import fields
+from marshmallow import validates
+from marshmallow.exceptions import ValidationError
 
 class OrderStatus(db.Model):
     ''' Create order_status model'''
@@ -14,6 +15,18 @@ class OrderStatus(db.Model):
 
 class OrderStatusSchema(ma.Schema):
 
+    @validates('type')
+    def validate_type(self, value):
+        try:
+            value = float(value)
+            raise ValidationError('You have to enter characters for the type.')
+        except ValueError:
+            if any(letter.isdigit() for letter in value):
+                raise ValidationError('Type must not contain numbers.')
+
+                
     class Meta:
         fields = ('id', 'type')
+        ordered = True # Display data in the order as listed in the fields above
+        
         

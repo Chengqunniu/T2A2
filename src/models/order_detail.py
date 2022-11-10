@@ -20,8 +20,13 @@ class OrderDetail(db.Model):
 class OrderDetailSchema(ma.Schema):
     product = fields.Nested('ProductSchema', only=['id', 'name'])
     order = fields.Nested('OrderSchema', only=['id'])
+    price = fields.Integer(strict=True, required=True)
+    quantity = fields.Integer(strict=True, required=True)
+    order_id = fields.Integer(strict=True)
+    product_id = fields.Integer(strict=True)
+
 
     class Meta:
-        fields = ('id', 'price', 'quantity', 'product', 'order')
-        ordered = True
+        fields = ('id', 'price', 'quantity', 'product', 'order', 'order_id', 'product_id')
+        ordered = True # Display data in the order as listed in the fields above
         

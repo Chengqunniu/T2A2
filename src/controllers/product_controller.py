@@ -6,6 +6,7 @@ from models.category import Category, CategorySchema
 from models.review import Review, ReviewSchema
 from models.customer import Customer
 from sqlalchemy.exc import IntegrityError
+from controllers.user_controller import authorize
 from datetime import date
 
     
@@ -17,7 +18,7 @@ def get_all_product():
     '''Get information about all products'''
     stmt = db.select(Product)
     products = db.session.scalars(stmt)
-    return ProductSchema(many=True).dump(products) 
+    return ProductSchema(many=True, exclude=['category_id']).dump(products) 
 
 
 @product_bp.route('/<int:product_id>/')
@@ -27,24 +28,28 @@ def get_single_product(product_id):
     stmt = db.select(Product).filter_by(id=product_id)
     product = db.session.scalar(stmt)
     if product:
-        return ProductSchema().dump(product) 
+        return ProductSchema(exclude=['category_id']).dump(product) 
     else:
         return {'error': f'Product not found with id {product_id}'}, 404
+
 
 @product_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_products():
     '''Create new products, only allowed for admin'''
     # authorize()
+
+    data = ProductSchema().load(request.json)
+
     try:
         # Create a new Product Method model instance
         # Request.json returns decode json to dict
         product = Product(
-            name = request.json['name'],
-            description = request.json['description'],
-            price = request.json['price'],
-            stock = request.json['stock'],
-            category_id = request.json['category_id'],
+            name = data['name'],
+            description = data['description'],
+            price = data['price'],
+            stock = data['stock'],
+            category_id = data['category_id'],
             create_date = date.today()
             )
 
@@ -52,29 +57,37 @@ def create_products():
         db.session.commit()
 
         # Response back to the client, user marshmallow to serialize data
-        return ProductSchema().dump(product), 201
+        return ProductSchema(exclude=['category_id']).dump(product), 201
 
     except IntegrityError:
-        return {'error': 'Product name already exists'}, 409
+        return {'error': 'Category does not exists.'}, 409
 
 
 @product_bp.route('/<int:product_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_product(product_id):
     ''' Update information about a specific product, only allowed for admin'''
+    authorize()
+
+    data = ProductSchema().load(request.json)
+
     stmt = db.select(Product).filter_by(id=product_id)
     product = db.session.scalar(stmt)
-
     if product:
-        product.name = request.json.get('name') or product.name
-        product.description = request.json.get('description') or product.description
-        product.price = request.json.get('price') or product.price
-        product.stock = request.json.get('stock') or product.stock
-        product.category_id = request.json.get('category_id') or product.category_id
+        try:
+            product.name = data['name'] or product.name
+            if 'description' in data.keys():
+                product.description = data['description'] or product.description
+            product.price = data['price'] or product.price
+            product.stock = data['stock'] or product.stock
+            product.category_id = data['category_id'] or product.category_id
 
-        db.session.commit()
+            db.session.commit() 
 
-        return ProductSchema().dump(product)
+            return ProductSchema(exclude=['category_id']).dump(product)
+
+        except IntegrityError:
+            return {'error': f' Category does not exist.'}
     else:
         return {'error': f'Product not found with id {product_id}'}, 404
 
@@ -83,18 +96,20 @@ def update_product(product_id):
 @jwt_required()
 def delete_product(product_id):
     ''' Delete sepecific product, only allowed for admin'''
-    # authorize()  # Only allow admin to delete users
+    authorize()  # Only allow admin to delete 
+    try:
+        stmt = db.select(Product).filter_by(id=product_id)
+        product = db.session.scalar(stmt)
 
-    stmt = db.select(Product).filter_by(id=product_id)
-    product = db.session.scalar(stmt)
-
-    if product:
-        db.session.delete(product)
-        db.session.commit()
-        return {'message': f"Product with id:{product.id}', name: {product.name}', "
-        f" deleted successfully"}
-    else:
-        return {'error': f'Product not found with id {product_id}'}, 404
+        if product:
+            db.session.delete(product)
+            db.session.commit()
+            return {'message': f"Product with id:{product.id}', name: {product.name}', "
+            f" deleted successfully"}
+        else:
+            return {'error': f'Product not found with id {product_id}'}, 404
+    except IntegrityError:
+        return {'error': 'You can not delete this product.'}, 409
 
 
 
@@ -123,11 +138,14 @@ def get_single_category(category_id):
 def create_categories():
     '''Create new categories, only allowed for admin'''
     # authorize()
+
+    data = CategorySchema().load(request.json)
+
     try:
         # Create a new Category model instance
         # Request.json returns decode json to dict
         category = Category(
-            type = request.json['type']
+            type = data['type']
             )
 
         db.session.add(category)
@@ -147,8 +165,10 @@ def update_category(category_id):
     stmt = db.select(Category).filter_by(id=category_id)
     category = db.session.scalar(stmt)
 
+    data = CategorySchema().load(request.json)
+
     if category:
-        category.type = request.json.get('type') or category.type
+        category.type = data('type') or category.type
 
         db.session.commit()
 
@@ -161,17 +181,19 @@ def update_category(category_id):
 @jwt_required()
 def delete_category(category_id):
     ''' Delete sepecific category, only allowed for admin'''
-    # authorize()  # Only allow admin to delete users
+    authorize()  # Only allow admin to delete category
 
     stmt = db.select(Category).filter_by(id=category_id)
     category = db.session.scalar(stmt)
-
-    if category:
-        db.session.delete(category)
-        db.session.commit()
-        return {'message': f"Category with id:{category.id}'deleted successfully"}
-    else:
-        return {'error': f'Product not found with id {category_id}'}, 404
+    try:
+        if category:
+            db.session.delete(category)
+            db.session.commit()
+            return {'message': f"Category with id:{category.id}'deleted successfully"}
+        else:
+            return {'error': f'Category not found with id {category_id}'}, 404
+    except IntegrityError:
+        return {'error': 'You can not delete this category.'}, 409
 
 
 @product_bp.route('/<int:product_id_entered>/review/')
@@ -239,14 +261,17 @@ def delete_review(product_id_entered, review_id):
 
     stmt = db.select(Product).filter_by(id=product_id_entered)
     product = db.session.scalar(stmt)
+    if product:
 
-    stmt = db.select(Review).filter_by(customer_id=customer.id, product_id=product.id)
-    review = db.session.scalar(stmt)
+        stmt = db.select(Review).filter_by(customer_id=customer.id, id=review_id)
+        review = db.session.scalar(stmt)
 
-    if review:
-        db.session.delete(review)
-        db.session.commit()
-        return {'message': f"Review with id:{review.id} has been deleted successfully."
-        f" deleted successfully"}
+        if review:
+            db.session.delete(review)
+            db.session.commit()
+            return {'message': f"Review with id:{review.id} has been deleted successfully."
+            f" deleted successfully"}
+        else:
+            return {'error': f'You do not have the review with id {review_id}'}, 404
     else:
-        return {'error': f'You do not have the review with id {review_id}'}, 404
+        return {'error': f' Product with id {product_id_entered} does not exists.'}

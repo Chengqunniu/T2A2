@@ -10,12 +10,13 @@ import os
 
 
 def create_app():
+    ''' Main program'''
     app = Flask(__name__)
 
     @app.errorhandler(400)
     def bad_request(err):
-        return {'error': str(err)}, 400
-        
+        return {'error': 'Please enter all required data'}, 400
+
     @app.errorhandler(KeyError)
     def key_error(err):
         return {'error': f'The field {err} is required.'}, 400
@@ -49,7 +50,6 @@ def create_app():
     app.register_blueprint(user_bp)
     app.register_blueprint(order_bp)
     app.register_blueprint(product_bp)
-
 
 
     return app

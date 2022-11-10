@@ -1,6 +1,6 @@
 from init import db, ma
 from marshmallow import fields
-from marshmallow.validate import Regexp
+from marshmallow.validate import Regexp, OneOf, And
 
 
 VALID_RATINGS = (1, 2, 3, 4, 5)
@@ -22,8 +22,11 @@ class Review(db.Model):
 
 
 class ReviewSchema(ma.Schema):
-    rating = fields.Integer(validate=Regexp('^[1-5]+$', error='Only numbers 1 to 5'))
+    rating = fields.Integer(strict=True, required=True, validate=
+        OneOf(VALID_RATINGS, error='Only numbers 1 to 5')
+    )
     
     class Meta:
         fields = ('id', 'comment', 'rating', 'customer_id', 'product_id')
+        ordered = True
         

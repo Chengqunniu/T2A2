@@ -28,11 +28,7 @@ class CategorySchema(ma.Schema):
         except ValueError:
             if any(letter.isdigit() for letter in value):
                 raise ValidationError('Product name must not contain numbers.')
-            else:
-                stmt = db.select(db.func.count()).select_from(Category).filter_by(type=value)
-                count = db.session.scalar(stmt)
-                if count > 0:
-                    raise ValidationError('Category type has already been used')
+
 
     class Meta:
         fields = ('id', 'type')

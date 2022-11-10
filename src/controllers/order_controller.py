@@ -20,7 +20,7 @@ order_bp = Blueprint('order', __name__, url_prefix='/order')  # create blueprint
 def get_all_orders():
     '''Allow admin user to check information for all orders'''
 
-    authorize()  # Authorize admin user to check information, it's same for the whole project
+    authorize()  # Authorize admin user to perform action, it's same for the whole project
 
     stmt = db.select(Order)  # Create SQL statement : select all orders
     orders = db.session.scalars(stmt)  # Return all orders
@@ -92,7 +92,7 @@ def create_order_detail():
 
     detail_data = OrderDetailSchema().load(request.json)  # User orderdetailschema to sanitise and validate data
 
-    try:  # User try/except to handle IntegrityError when data breach the ForeignKey constraint
+    try:  # User try/except to handle IntegrityError, order_id and product_id must exist
     # Create a new orderdetail
         order_detail = OrderDetail(
             price = detail_data['price'],
@@ -104,6 +104,7 @@ def create_order_detail():
         db.session.add(order_detail)
         db.session.commit()
 
+        # Response back to the client, user marshmallow to serialize data
         return OrderDetailSchema(exclude=['order_id', "product_id"]).dump(order_detail)
 
     except IntegrityError:
@@ -118,6 +119,8 @@ def get_all_details():
     authorize()  # Only allow admin user to check information of all details
     stmt = db.select(OrderDetail)  # Create SQL statement : select all order_details
     order_details = db.session.scalars(stmt)  # Return all order_details
+
+    # Response back to the client, user marshmallow to serialize data
     return OrderDetailSchema(many=True).dump(order_details) 
 
 
@@ -132,6 +135,7 @@ def get_single_order_detail(order_detail_id):
     # If order_detail exists, return the information of it
     # If not exists, return error message
     if order_detail:
+        # Response back to the client, user marshmallow to serialize data
         return OrderDetailSchema().dump(order_detail) 
     else:
         return {'error': f'order_detail not found with id {order_detail_id}'}, 404
@@ -145,6 +149,8 @@ def get_all_order_statues():
     authorize() 
     stmt = db.select(OrderStatus)  # Create SQL statement : select all order statuses
     order_statues = db.session.scalars(stmt)  #  Return order_statues
+
+    # Response back to the client, user marshmallow to serialize data
     return OrderStatusSchema(many=True).dump(order_statues) 
 
 
@@ -159,6 +165,7 @@ def get_single_order_status(order_status_id):
     # If order_status exists, return the information of the order_status
     # If not exists, return error message
     if order_status:
+        # Response back to the client, user marshmallow to serialize data
         return OrderStatusSchema().dump(order_status) 
     else:
         return {'error': f'order_status not found with id {order_status_id}'}, 404
@@ -173,6 +180,7 @@ def create_order_statues():
 
     data = OrderStatusSchema().load(request.json)  # User orderstatusschema to sanitise and validate data
 
+    # Use try/except to handle IntegrityError, type is unique
     try:
         # Create a new order status
         order_statues = OrderStatus(
@@ -192,14 +200,17 @@ def create_order_statues():
 @order_bp.route('/status/<int:order_status_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_order_status(order_status_id):
-    ''' Update information about a specific user'''
+    ''' Update order status'''
+
     authorize()
 
-    data = OrderStatusSchema().load(request.json)
+    data = OrderStatusSchema().load(request.json)  # Use orderstatusschema to sanitise and validate data
 
-    stmt = db.select(OrderStatus).filter_by(id=order_status_id)
-    order_status = db.session.scalar(stmt)
+    stmt = db.select(OrderStatus).filter_by(id=order_status_id)  # Create SQL statement : select order_status using order_status id
+    order_status = db.session.scalar(stmt)  # Return the order_status found
 
+    # If order_status exists, update order status
+    # If not, return the error message
     if order_status:
         order_status.type = data['type'] or order_status.type
 
@@ -213,12 +224,16 @@ def update_order_status(order_status_id):
 @order_bp.route('/status/<int:order_status_id>/', methods=['DELETE'])
 @jwt_required()
 def delete_order_status(order_status_id):
-    ''' Delete sepecific user'''
-    authorize()  # Only allow admin to delete order status
+    ''' Delete order status'''
 
-    stmt = db.select(OrderStatus).filter_by(id=order_status_id)
-    order_status = db.session.scalar(stmt)
+    authorize()
+
+    stmt = db.select(OrderStatus).filter_by(id=order_status_id)  # Create SQL statement : select order_status using the order_status id
+    order_status = db.session.scalar(stmt)  # Return the order_status found
+    # Use try/except to handle IntegrityError, if the order_status has related orders, it can not be deleted
     try:
+        # If order_status exists with the id, delete it
+        # If not, return error message
         if order_status:
             db.session.delete(order_status)
             db.session.commit()
@@ -228,24 +243,32 @@ def delete_order_status(order_status_id):
     except IntegrityError:
         return {'error': 'You can not delete this order status.'}, 409
 
+
 @order_bp.route('/shipping/')
 @jwt_required()
 def get_all_shipping_methods():
-    '''Get information about all shipping methods, only allowed for admin'''
-    # authorize()
-    stmt = db.select(ShippingMethod)
-    shipping_methods = db.session.scalars(stmt)
+    '''Allow admin user to get information of all shipping methods'''
+
+    authorize()
+    stmt = db.select(ShippingMethod)  # Create SQL statement : select all shipping methods
+    shipping_methods = db.session.scalars(stmt)  # Return all shipping methods
+
+    # Response back to the client, user marshmallow to serialize data
     return ShippingMethodSchema(many=True).dump(shipping_methods) 
 
 
 @order_bp.route('/shipping/<int:shipping_method_id>/')
 @jwt_required()
 def get_single_shipping_method(shipping_method_id):
-    '''Get information about a specific shipping method, only allowed for admin'''
-    # authorize()
-    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)
-    shipping_method = db.session.scalar(stmt)
+    '''Allow admin user to get information about a specific shipping method'''
+    authorize()
+    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)  # Create SQL statement : select shipping method with specific id
+    shipping_method = db.session.scalar(stmt)  # Return the shipping method found
+    # If shipping method exists, return the information
+    # If not, return the error message
     if shipping_method:
+        
+        # Response back to the client, user marshmallow to serialize data
         return ShippingMethodSchema().dump(shipping_method) 
     else:
         return {'error': f'Shipping method not found with id {shipping_method_id}'}, 404
@@ -254,14 +277,15 @@ def get_single_shipping_method(shipping_method_id):
 @order_bp.route('/shipping/', methods=['POST'])
 @jwt_required()
 def create_shiping_methods():
-    '''Create new shipping methods, only allowed for admin'''
+    '''Allow admin user to create new shipping method'''
+
     authorize()
 
-    data = ShippingMethodSchema().load(request.json)
+    data = ShippingMethodSchema().load(request.json)  # Use shippingmethodschema to sanitise and validate data
 
+    # Use try/except to handle IntegrityError, the type of shipping method is unique
     try:
-        # Create a new Shipping Method model instance
-        # Request.json returns decode json to dict
+        # Create a new shipping method
         shipping_method = ShippingMethod(
             type = data['type'],
             price = data['price']
@@ -280,14 +304,16 @@ def create_shiping_methods():
 @order_bp.route('/shipping/<int:shipping_method_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_one_shipping_method(shipping_method_id):
-    ''' Update information about a specific user'''
+    ''' Update information about a specific shipping method'''
     authorize()
     
-    data = ShippingMethodSchema().load(request.json)
+    data = ShippingMethodSchema().load(request.json)  # Use shippingmethodschema to sanitise and validate data
 
-    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)
-    shipping_method = db.session.scalar(stmt)
+    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)  # Create SQL statement : select shipping method with sepecific method id
+    shipping_method = db.session.scalar(stmt)  # Return the shipping_method found
 
+    # If shipping method exists, update it
+    # If not, return the error message
     if shipping_method:
         if 'type' in data.keys():
             shipping_method.type = data['type'] or shipping_method.type
@@ -295,6 +321,7 @@ def update_one_shipping_method(shipping_method_id):
 
         db.session.commit()
 
+        # Response back to the client, user marshmallow to serialize data
         return OrderStatusSchema().dump(shipping_method)
     else:
         return {'error': f'Shipping method not found with id {shipping_method_id}'}, 404
@@ -303,12 +330,16 @@ def update_one_shipping_method(shipping_method_id):
 @order_bp.route('/shipping/<int:shipping_method_id>/', methods=['DELETE'])
 @jwt_required()
 def delete_one_shipping_method(shipping_method_id):
-    ''' Delete sepecific shipping method'''
-    authorize()  # Only allow admin to delete shipping method
-
-    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)
-    shipping_method = db.session.scalar(stmt)
+    ''' Allow admin user to delete a shipping method'''
+    authorize()
+  
+    stmt = db.select(ShippingMethod).filter_by(id=shipping_method_id)  # Create SQL statement : select shipping method with specific id
+    shipping_method = db.session.scalar(stmt)  # Return the shipping_method found
+    # Use try/except to handle IntegrityError, if shipping_method being used as ForeignKey in orders table
+    # It can not be deleted
     try:
+        # If shipping method exists with the id, delete it
+        # If not, return error message
         if shipping_method:
             db.session.delete(shipping_method)
             db.session.commit()

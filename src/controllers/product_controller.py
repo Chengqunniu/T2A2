@@ -10,14 +10,16 @@ from controllers.user_controller import authorize
 from datetime import date
 
     
-product_bp = Blueprint('product', __name__, url_prefix='/product')
+product_bp = Blueprint('product', __name__, url_prefix='/product')  # Create a blueprint for product controller
 
 @product_bp.route('/')
 @jwt_required()
 def get_all_product():
-    '''Get information about all products'''
-    stmt = db.select(Product)
-    products = db.session.scalars(stmt)
+    '''Get information of all products'''
+    stmt = db.select(Product)  # Create SQL statement: select all products
+    products = db.session.scalars(stmt)  # Return all products
+
+    # Response back to the client, user marshmallow to serialize data
     return ProductSchema(many=True, exclude=['category_id']).dump(products) 
 
 
@@ -25,9 +27,13 @@ def get_all_product():
 @jwt_required()
 def get_single_product(product_id):
     '''Get information about a specific product'''
-    stmt = db.select(Product).filter_by(id=product_id)
-    product = db.session.scalar(stmt)
+    stmt = db.select(Product).filter_by(id=product_id)  # Create SQL statement : select a product with specific id
+    product = db.session.scalar(stmt)  # Return the product found
+    # If product exists, return the information of the product
+    # If not, return the error message
     if product:
+
+        # Response back to the client, user marshmallow to serialize data
         return ProductSchema(exclude=['category_id']).dump(product) 
     else:
         return {'error': f'Product not found with id {product_id}'}, 404
@@ -36,14 +42,13 @@ def get_single_product(product_id):
 @product_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_products():
-    '''Create new products, only allowed for admin'''
-    # authorize()
+    '''Allow admin user to create new products'''
+    authorize()  # Authorize admin user to perform action, same for the whole project
 
-    data = ProductSchema().load(request.json)
-
+    data = ProductSchema().load(request.json)  # Use productschema to sanitise and validate data
+    # Use try/except to handle IntegrityError, make sure product belongs to an existing category
     try:
-        # Create a new Product Method model instance
-        # Request.json returns decode json to dict
+        # Create a new product
         product = Product(
             name = data['name'],
             description = data['description'],
@@ -66,14 +71,17 @@ def create_products():
 @product_bp.route('/<int:product_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_product(product_id):
-    ''' Update information about a specific product, only allowed for admin'''
+    ''' Allow admin user to update information about a specific product'''
     authorize()
 
-    data = ProductSchema().load(request.json)
+    data = ProductSchema().load(request.json)  # Use productschema to sanitise and validate data
 
-    stmt = db.select(Product).filter_by(id=product_id)
-    product = db.session.scalar(stmt)
+    stmt = db.select(Product).filter_by(id=product_id)  # Create SQL statement : select product with specific id
+    product = db.session.scalar(stmt)  # Return the product found
+    # If product exists, update it
+    # If not, return the error message
     if product:
+        # Use try/except to handle IntegrityError, make sure product belongs to an existing category
         try:
             product.name = data['name'] or product.name
             if 'description' in data.keys():
@@ -84,6 +92,7 @@ def update_product(product_id):
 
             db.session.commit() 
 
+            # Response back to the client, user marshmallow to serialize data
             return ProductSchema(exclude=['category_id']).dump(product)
 
         except IntegrityError:
@@ -95,12 +104,15 @@ def update_product(product_id):
 @product_bp.route('/<int:product_id>/', methods=['DELETE'])
 @jwt_required()
 def delete_product(product_id):
-    ''' Delete sepecific product, only allowed for admin'''
-    authorize()  # Only allow admin to delete 
+    ''' Allow admin user to delete sepecific product'''
+    authorize()
+    # Use try/except to handle IntegrityError, if product_id being used as ForeignKey in order_details
+    # It can not be deleted
     try:
-        stmt = db.select(Product).filter_by(id=product_id)
-        product = db.session.scalar(stmt)
-
+        stmt = db.select(Product).filter_by(id=product_id)  # Create SQL statement : select product with specific id
+        product = db.session.scalar(stmt)  # Return the product found
+        # If product exists, delete it
+        # If not, return the error message
         if product:
             db.session.delete(product)
             db.session.commit()
@@ -112,13 +124,15 @@ def delete_product(product_id):
         return {'error': 'You can not delete this product.'}, 409
 
 
-
 @product_bp.route('/category/')
 @jwt_required()
 def get_all_categories():
-    '''Get information about all categoreis, only allowed for admin'''
-    stmt = db.select(Category)
-    categories = db.session.scalars(stmt)
+    '''Get information about all categoreis'''
+    
+    stmt = db.select(Category)  # Create SQL statement : select all categories
+    categories = db.session.scalars(stmt)  # Return all categories
+
+    # Response back to the client, user marshmallow to serialize data
     return CategorySchema(many=True).dump(categories) 
 
 
@@ -126,24 +140,29 @@ def get_all_categories():
 @jwt_required()
 def get_single_category(category_id):
     '''Get information about a specific category'''
-    stmt = db.select(Category).filter_by(id=category_id)
-    category = db.session.scalar(stmt)
+
+    stmt = db.select(Category).filter_by(id=category_id)  # Create SQL statement : select category with a specific id
+    category = db.session.scalar(stmt)  # Return the category found
+    # If category exists, return the information of the category
+    # If not, return the error message
     if category:
+        # Response back to the client, user marshmallow to serialize data
         return CategorySchema().dump(category) 
     else:
         return {'error': f'Category not found with id {category_id}'}, 404
 
+
 @product_bp.route('/category/', methods=['POST'])
 @jwt_required()
 def create_categories():
-    '''Create new categories, only allowed for admin'''
+    '''Allow admin user to create new categories'''
+
     # authorize()
 
-    data = CategorySchema().load(request.json)
-
+    data = CategorySchema().load(request.json)  # Use CategorySchema to sanitise and validate data
+    # Use try/except to handle IntegrityError, make sure category type is unique
     try:
-        # Create a new Category model instance
-        # Request.json returns decode json to dict
+        # Create a new category
         category = Category(
             type = data['type']
             )
@@ -153,42 +172,57 @@ def create_categories():
 
         # Response back to the client, user marshmallow to serialize data
         return CategorySchema().dump(category), 201
-
     except IntegrityError:
-        return {'error': 'Category type already exists'}, 409
+        return {'error': 'Category type has already been used.'}, 409
+
 
 
 @product_bp.route('/category/<int:category_id>', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_category(category_id):
-    ''' Update information about a specific category, only allowed for admin'''
-    stmt = db.select(Category).filter_by(id=category_id)
-    category = db.session.scalar(stmt)
+    '''Allow admin user to update information about a specific category'''
 
-    data = CategorySchema().load(request.json)
+    authorize()
 
-    if category:
-        category.type = data('type') or category.type
+    stmt = db.select(Category).filter_by(id=category_id)  # Create SQL statement : select category with a specific id
+    category = db.session.scalar(stmt)  # Return the category found
 
-        db.session.commit()
+    data = CategorySchema().load(request.json)  # Use CategorySchema to sanitise and validate data
 
-        return CategorySchema().dump(category)
-    else:
-        return {'error': f'Category not found with id {category_id}'}, 404
+    # Use try/except to handle IntegrityError, make sure category type is unique
+    try:
+        # If category exists, update it
+        # If not, return the error message
+        if category:
+            category.type = data('type') or category.type
+
+            db.session.commit()
+
+            # Response back to the client, user marshmallow to serialize data
+            return CategorySchema().dump(category)
+        else:
+            return {'error': f'Category not found with id {category_id}'}, 404
+    except IntegrityError:
+        return {'error': 'Category type has already been used.'}, 409
 
 
 @product_bp.route('/category/<int:category_id>/', methods=['DELETE'])
 @jwt_required()
 def delete_category(category_id):
-    ''' Delete sepecific category, only allowed for admin'''
-    authorize()  # Only allow admin to delete category
+    ''' Allow admin user to delete sepecific category'''
+    authorize() 
 
-    stmt = db.select(Category).filter_by(id=category_id)
-    category = db.session.scalar(stmt)
+    stmt = db.select(Category).filter_by(id=category_id)  # Create SQL statement : select category with a specific id
+    category = db.session.scalar(stmt)  # Return the category found
+    # Use try/except to handle IntegrityError, if category being used as ForeignKey in products
+    # It can not be deleted
     try:
+        # If category exists, delete it
+        # If not, return the error message
         if category:
             db.session.delete(category)
             db.session.commit()
+
             return {'message': f"Category with id:{category.id}'deleted successfully"}
         else:
             return {'error': f'Category not found with id {category_id}'}, 404
@@ -200,10 +234,13 @@ def delete_category(category_id):
 @jwt_required()
 def get_all_reviews(product_id_entered):
     '''Get information of all reviews for one product'''
-    
-    stmt = db.select(Review).filter_by(product_id=product_id_entered)
-    reviews = db.session.scalars(stmt)
-    list_of_reviews = ReviewSchema(many=True).dump(reviews)
+
+    # Create SQL statement : select all reviews for a specific product
+    stmt = db.select(Review).filter_by(product_id=product_id_entered) 
+    reviews = db.session.scalars(stmt)  # Return all reviews for that product
+    list_of_reviews = ReviewSchema(many=True).dump(reviews)  # Serialize data
+    # If product has no review, return the error message
+    # Otherwise, display all reviews
     if list_of_reviews == []:
         return {'error': f'Product with id {product_id_entered} does not have any reviews.'}, 404
     else:
@@ -214,9 +251,14 @@ def get_all_reviews(product_id_entered):
 @jwt_required()
 def get_single_review(product_id_entered, review_id):
     '''Get a specific review information about a specific product'''
-    stmt = db.select(Review).filter_by(id=review_id, product_id=product_id_entered)
-    review = db.session.scalar(stmt)
+
+    # Create SQL statement : select a specific review for a specific product
+    stmt = db.select(Review).filter_by(id=review_id, product_id=product_id_entered)  
+    review = db.session.scalar(stmt)  # Return the review found
+    # If review exists, return the review information
+    # If not, return the error message
     if review:
+        # Response back to the client, user marshmallow to serialize data
         return ReviewSchema().dump(review) 
     else:
         return {'error': f'Review not found with id {review_id}'}, 404
@@ -229,12 +271,14 @@ def create_review(product_id_entered):
     review_data = ReviewSchema().load(request.json)  # Use reviewschema to sanitise and validate data
 
     user_id = get_jwt_identity()
-    
+    # Create SQL statement : select customer with the user id
     stmt = db.select(Customer).filter_by(user_id=user_id)
-    customer = db.session.scalar(stmt)
-
+    customer = db.session.scalar(stmt)  # Return the customer found
+    # Create SQL statement : select product with product_id entered
     stmt = db.select(Product).filter_by(id=product_id_entered)
-    product = db.session.scalar(stmt)
+    product = db.session.scalar(stmt)  # Return the product found
+    # If product exists, create review for it
+    # If not, return the error message
     if product:
         review = Review(
             comment = review_data['comment'],
@@ -244,6 +288,8 @@ def create_review(product_id_entered):
         )
         db.session.add(review)
         db.session.commit()
+
+        # Response back to the client, user marshmallow to serialize data
         return ReviewSchema().dump(review) 
     else:
         return {'error': f'Product with id {product_id_entered} does not exists.'}, 404
@@ -252,20 +298,23 @@ def create_review(product_id_entered):
 @product_bp.route('/<int:product_id_entered>/review/<int:review_id>/', methods=['DELETE'])
 @jwt_required()
 def delete_review(product_id_entered, review_id):
-    '''Create a review for one product'''
+    '''Delete a review for one product'''
 
     user_id = get_jwt_identity()
-    
+    # Create SQL statement : select customer with the user id
     stmt = db.select(Customer).filter_by(user_id=user_id)
-    customer = db.session.scalar(stmt)
-
+    customer = db.session.scalar(stmt)  # Return the customer found
+    # Create SQL statement : select product with product id entered
     stmt = db.select(Product).filter_by(id=product_id_entered)
-    product = db.session.scalar(stmt)
+    product = db.session.scalar(stmt)  # Return the product found
+    # If product exists, delete it
+    # If not, return the error message
     if product:
-
+        # Create SQL statement : select a review made by logged in customer and with a specific id
         stmt = db.select(Review).filter_by(customer_id=customer.id, id=review_id)
-        review = db.session.scalar(stmt)
-
+        review = db.session.scalar(stmt)  # Return the review found
+        # If review exists, delete it
+        # If not, return the error message
         if review:
             db.session.delete(review)
             db.session.commit()

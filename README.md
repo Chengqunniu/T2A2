@@ -127,8 +127,8 @@ This table contains basic information for all users.
 Below are columns with their data types and constraints.
 
 * id (PK, serial int, not null) Primary key
-* first name (varchar(100), not null)
-* last name (varchar(100), not null) 
+* first name (string(100), not null)
+* last name (string(100), not null) 
 * Password (text, not null), the password is used for user authentication
 * Is admin (boolean, default value is false). This column is for user authorization. Users who have True value are allowed to edit products. Only admin users have true value for this column. Customer users all have the default value. 
 
@@ -140,7 +140,7 @@ This table contains specific information for customers.
 Columns, data types, and constrains are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Email (varchar(255), not null)
+* Email (string, not null)
 * Phone (int, not null)
 * User id (int, FK, not null). Links the users table and customers table
 * Address(int, FK, not null). Links the customers table and addresses table
@@ -161,10 +161,10 @@ This table contains customers' addresses.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Street number ( int, not null)
-* Street name (varchar(100), not null)
-* Suburb (varchar(100), not null)
-* Postcode_id (int, FK, not null) Links the address table and postcode table.
+* Street number (int, not null)
+* Street name (string(100), not null)
+* Suburb (string(100), not null)
+* Postcode_id (int, FK, not null) Links the address table and postcode table. Each address has its own postcode.
 
 #### Relationship (addresses table and postcodes table)
 
@@ -179,7 +179,7 @@ This table contains the postcode and corresponding state.
 Columns, data types, and constraints are listed below:
 
 * Postcode (PK, int, not null)
-* State (varchar(100), not null)
+* State (string(100), not null)
 
 The primary key has been used as a foreign key in the addresses table, which was already mentioned above.
 
@@ -192,9 +192,10 @@ Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
 * Card number (int, not null)
-* Card owner's name (int, not null)
-* Expire date (date, not null)
-* Security number (int(3), not null)
+* Card owner's name (string(100), not null)
+* Expire date (string, not null)
+* Security number (int, not null)
+* Encrypted_card_no (string, not null)
 * Customer id (int, FK, not null). Links the payment methods table to the customers table.
 
 #### Relationship (payment accounts table and customers table)
@@ -228,10 +229,6 @@ The relationship between the customers table and the orders table is a one-to-ma
 
 The relationship between the shipping methods table and the orders table is a one-to-many relationship. An order will be shipped by only one method, and a shipping method can be selected by many orders or none of them. So an order has one and only one shipping method. A shipping method could be selected by zero or many orders.
 
-#### Relationship (payment accounts table and orders table)
-
-The relationship between the payment accounts table and the orders table is a one-to-many relationship. An order could only be paid by one payment account. A payment account might be used to pay for many orders or have never been used for the payment. So an order paid by one and only one payment account, and a payment account could be used to pay for zero or many orders.
-
 ---
 
 ### Order status table
@@ -240,7 +237,7 @@ This table contains different types of order statuses.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Description (varchar(50), not null)
+* Description (string(50), not null)
 
 The primary key of this table has been used as the foreign key in the orders table to link these two tables. The relationship has been mentioned above.
 
@@ -265,7 +262,7 @@ This table contains information for products.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null). Primary Key
-* Name (varchar(100), not null)
+* Name (string(100), not null)
 * Description(text)
 * Price(int, not null)
 * Stock(int, not null)
@@ -339,24 +336,6 @@ The relationship between the products table and the reviews table is also a one-
 
 ---
 
-### Transactions table
-
-This table contains the transaction information.
-Columns, data types, and constraints are listed below:
-
-* Id (PK, serial int, not null) Primary key
-* Transaction date (date)
-* Order id (int, FK, not null) Links the orders table
-* Customer id (int, FK, not null) Links the customers table
-
-#### Relationship (transactions table and customers table)
-
-The relationship between the transactions table and the customers table is a one-to-many relationship. A customer can be created before a transaction, but a transaction can not be created without a customer. Also, a customer could have many transactions. Therefore, a customer has zero or many transactions, and a transaction belongs to one and only one customer.
-
-#### Relationship (transactions table and orders table)
-
-The relationship between the orders table and the transactions details table is a one-to-one relationship. An order could only have a transaction and vice versa.
-
 ## Project Management
 
 ---
@@ -405,3 +384,84 @@ Secondly, I have created several columns or stages, includes backlog, to-do, doi
 Once a task in the doing column is finished, I will move the task into the done column.  Once all tasks in the doing column are finished, I will move task from the to-do column into the doing column and working on it. At the same time, I will move tasks from the backlog column to the to-do column.
 
 If there is any additional requirements, I can easily create a new card in the backlog without affecting others.
+
+
+## Third party services or Pypi packages
+
+* flask
+  
+  Flask is a web app framework written in python for developing web applications. Flask has several dependencies, includes Werkzeug, Jinja2, MarkupSafe, itsdangerous and click.
+
+  Flask use Werkzeug to implements WSGI.
+
+  Jinja2 is a template engine used to render the pages.
+
+  MarkupSafe prevents injection attacks by escaping untrusted input.
+
+  itsdangerous protect data by cryptographically signing it.
+
+  Click is used for creating cli command in flask.
+
+  Developers have to import and create a object of Flask class. The object or instance of the Flask class is the main application for the project. Flask will run this instance each time.
+
+  ---
+
+* flask-sqlalchemy
+  
+  Flask-SQLALchemy is a flask extension that provides support for SQLALchemy to the project. It simplifies the use of SQLAlchemy by automatically handling the creation, use, and cleanup of commonly used SQLAlchemy objects.
+
+  In order to use flask-sqlalchemy, it has to use configuration key to connect properly to the database. The key is SQLALCHEMY_DATABASE_URI key. The format is 'database type' + 'adaptor' + '://' + 'user name and password' + 'port number (default:5432)' + 'database'
+
+  Developers could use this pypi package to define and create models and make queries for the database and manipulate data.
+
+  ---
+
+* psycopg2
+  
+  It is a commonly used PostgreSQL database adapter for python. It implements Python DB API2.0 and the thread safety. It is designed for multi-threaded applications and used to link a project with a PostgreSQL database and perform operation on the database. In this project, I have used it together with flask-sqlalchemy to connect and manipulate data. It can be put into the DATABASE_URI key to configure the flask-sqlalchemy, then use flask-sqlalchemy to perform operations.
+
+  ---
+
+* flask-marshmallow
+  
+  It is the integration layer for Flask and marshmallow. Marshmallow provides support for serializing and deserializing data. Serialize data converts app-level objects to particular python types such as dict, which allows flask to render and convert data to the JSON format and displayed in the HTTP response (With dump method). It could also deserialize JSON format data into python types such as dictionary which could be used within the python program(with load method). Another important part of it is schema which defines fields that will be dump and load, developers could also set up rules within the schema to sanitise and valite data input. Fields are defined with the model using flask-sqlalchemy.
+
+  In addition to the function above, flask-marshmallow has additional features such as URL and Hyperlinks fiedls for HATEOAS ready APIs.
+
+  Developers have to import and create an instance of marshamllow class. Define models and fields using flask-sqlalchemy and the define the HTTP response, data validation with marshamllow.
+
+  ---
+
+* flask-bcrypt
+
+  Flask-bcrypt is a flask extension that hashes important information with bcrypt. Bcrypt is an hasing algorithm that hash and salt the information, it is designed to be slow for hashing. The more time it takes to hash the information, the longer time needed for hacker to brute-force the information. It is commonly used to encrypt password and other important information in flask project.
+
+  In order to use it, developers have to import and create an instance of flask-bcrypt. Then use bcrypt to hash password. As hashing is a one-way operation, and even with same password, the result is different for different hashing. Developers can not hash the pasword again to check their identity. To do this, developers could use bcrypt method(check_password_hash) to check whether the password entered is correct and verify user identities.
+
+  ---
+
+* flask-jwt-extended
+
+  It is a python package that allows flask project using JSON Web Tokens (JWT) to authenticate user and protect routes. Developers could create custom token and secret key, setting up different properties, such as the expiring time for the token.
+  
+  Users have to log in to verify their indentity. Once their identity has been verified successfully, the API will return a token. They have to include this token in the HTTP request for authentication purposes. Once the token expired, users could log in again to re-authenticate.
+
+  In order to create a web token, developers have to import and create an instance of JWTManager first. Then create a custom secret key for the project and use JWT_SECRET_KEY to configure the token.   After this, developers could use jwt_required() function from flask_jwt_extended to protect routes and use get_jwt_identity() function to obtain the identity of a JWT. Developers could set the custom JWT identity. For example, within this project, I have set up user_id as the JWT identity, which can be used later in the project for creating other records.
+
+  ---
+
+* marshmallow-sqlalchemy
+  
+  It is a python package that helps to integrate SQLAlchemy and marshmallow. It is required in order for flask_sqlalchemy to work properly.
+
+  ---
+
+* pip-review
+
+  This python package could list all available updates for all installed packages and allow developers to update all of them together.
+
+  ---
+
+* python-dotenv
+
+  Developers could configure flask app in a separate environment file rather than in the main python file, such as which python file is the main python file, what is the flask environment and what is the port number for the app. Python-dotenv is used to link the environment file to flask and causes the flask app to load the environment variables from this environment file every time developers run the app.

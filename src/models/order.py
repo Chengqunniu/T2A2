@@ -1,7 +1,7 @@
 from init import db, ma
 from marshmallow import fields
 
-ORDER_STATUS_ID =[1,2]
+ORDER_STATUS_ID =[1,2]  # List of status, used for validation
 
 class Order(db.Model):
     ''' Create order model'''
@@ -23,21 +23,27 @@ class Order(db.Model):
 
 
 class OrderSchema(ma.Schema):
+    ''' Schema for Order'''
+    
     user = fields.List(fields.Nested('UserSchema', only=['id']))
     address = fields.List(fields.Nested('AddressSchema', exclude=['customers']))
     shipping_method = fields.Nested('ShippingMethodSchema', exclude=['id'])
     order_details = fields.List(fields.Nested('OrderDetailSchema'))
     order_status = fields.Nested('OrderStatusSchema', exclude=['id'])
 
+    # Validate order_date entered, make sure it is a date type
     order_date = fields.Date(strict=True)
+    # Validate ship_date entered, make sure it is a string
     ship_date = fields.String(strict=True)
+    # Validate order_status_id entered, make sure it is a number
+    # Set default to 1
     order_status_id = fields.Integer(strict=True, load_default=ORDER_STATUS_ID[0])
+    # Validate customer_id entered, make sure it is a number
     customer_id = fields.Integer(strict=True)
+    # Validate shipping_method_id entered, make sure it is a number
     shipping_method_id = fields.Integer(strict=True, required=True)
 
 
-
-    
     class Meta:
         fields = ('id', 'order_date', 'ship_date', 'order_status', 'order_status_id', 'customer_id', 'shipping_method_id','shipping_method','order_details')
         ordered = True # Display data in the order as listed in the fields above

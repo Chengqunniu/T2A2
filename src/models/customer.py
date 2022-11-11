@@ -21,19 +21,25 @@ class Customer(db.Model):
 
 
 class CustomerSchema(ma.Schema):
-    address = fields.Nested('AddressSchema')
-    user = fields.Nested('UserSchema', only=['id', 'first_name', 'last_name'])
-    phone = fields.Integer(strict=True, required=True)
-    address_id = fields.Integer(strict=True)
-    user_id = fields.Integer(strict=True, required=True)
+    ''' Schema for customer'''
 
+    address = fields.Nested('AddressSchema')
     payment_accounts = fields.List(fields.Nested('PaymentAccountSchema', only=['encrypted_card_no']))
     orders = fields.List(fields.Nested('OrderSchema', exclude=['payment_account', 'customer_id']))
     reviews = fields.List(fields.Nested('ReviewSchema', exclude=['customer_id']))
+    user = fields.Nested('UserSchema', only=['id', 'first_name', 'last_name'])
+
+    # Validate phone number entered, make sure it is a number
+    phone = fields.Integer(strict=True, required=True)
+    # Validate address id entered, make sure it is a number
+    address_id = fields.Integer(strict=True)
+    # Validate user_id entered, make sure it is a number
+    user_id = fields.Integer(strict=True, required=True)
+
 
     @validates('phone')
     def validate_phone(self, value):
-
+        ''' Validate the phone number entered, make sure it is unique'''
         stmt = db.select(db.func.count()).select_from(Customer).filter_by(phone=value)
         count = db.session.scalar(stmt)
         if count > 0:

@@ -14,9 +14,12 @@ class OrderStatus(db.Model):
 
 
 class OrderStatusSchema(ma.Schema):
+    ''' Schema for OrderStatus'''
 
     @validates('type')
     def validate_type(self, value):
+        ''' Validate the order status type entered''' 
+        # Raise an exception if the type is a number or includes number in it
         try:
             value = float(value)
             raise ValidationError('You have to enter characters for the type.')

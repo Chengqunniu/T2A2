@@ -18,10 +18,13 @@ class Category(db.Model):
 class CategorySchema(ma.Schema):
     ''' Schema for category'''
 
+    # Validate category type entered, make sure it is a string
     type = fields.String(strict=True)
 
     @validates('type')
     def validate_type(self, value):
+        ''' Validate category type'''
+        # Raise an exception if category type is a number or includes number in it
         try:
             value = float(value)
             raise ValidationError('You have to enter characters for the product name.')

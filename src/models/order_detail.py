@@ -18,11 +18,17 @@ class OrderDetail(db.Model):
 
 
 class OrderDetailSchema(ma.Schema):
+    ''' Schema for OrderDetail'''
+    
     product = fields.Nested('ProductSchema', only=['id', 'name'])
     order = fields.Nested('OrderSchema', only=['id'])
+    # Validate price entered, make sure it is a number
     price = fields.Integer(strict=True, required=True)
+    # Validate quantity entered, make sure it is a number
     quantity = fields.Integer(strict=True, required=True)
+    # Validate order_id entered, make sure it is a number
     order_id = fields.Integer(strict=True)
+    # Validate product_id entered, make sure it is a number
     product_id = fields.Integer(strict=True)
 
 

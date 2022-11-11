@@ -1,6 +1,5 @@
 from init import db, ma
 from marshmallow import fields, validates
-from marshmallow.validate import Regexp, OneOf, And
 from marshmallow.exceptions import ValidationError
 
 
@@ -21,12 +20,16 @@ class AddressSchema(ma.Schema):
     ''' Schema for address'''
 
     postcode = fields.Nested('PostcodeSchema')
+    # Validate street number entered, make sure it is a number
     street_number = fields.Integer(strict=True, required=True)
+    # Validate postcode_id entered, make sure it is a number
     postcode_id = fields.Integer(strict=True, required=True)
  
 
     @validates('street_name')
     def validate_street_name(self, value):
+        ''' Validate the street name entered'''
+        # Raise an exception if the street name is a number or includes number in it
         try:
             value = float(value)
             raise ValidationError('You have to enter characters in the street name.')
@@ -36,6 +39,8 @@ class AddressSchema(ma.Schema):
 
     @validates('suburb')
     def validate_suburb(self, value):
+        ''' Validate the suburb entered'''
+        # Raise an exception if the suburb is a number or includes number in it
         try:
             value = float(value)
             raise ValidationError('You have to enter characters in the street name.')

@@ -16,10 +16,15 @@ class ShippingMethod(db.Model):
 
 
 class ShippingMethodSchema(ma.Schema):
+    ''' Schema for shipping_method'''
+
+    # Validate price entered, make sure it is a float number
     price = fields.Float(strict=True, required=True)
 
     @validates('type')
     def validate_type(self, value):
+        ''' Validate the type entered'''
+        # Raise an exception if the type is a number or includes number in it
         try:
             value = float(value)
             raise ValidationError('You have to enter characters for the type.')

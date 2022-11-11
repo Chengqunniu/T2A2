@@ -142,8 +142,8 @@ Columns, data types, and constrains are listed below:
 * Id (PK, serial int, not null) Primary key
 * Email (string, not null)
 * Phone (int, not null)
-* User id (int, FK, not null). Links the users table and customers table
-* Address(int, FK, not null). Links the customers table and addresses table
+* User id (int, FK, not null). Links the users table and customers table, one customer is one user.
+* Address(int, FK, not null). Links the customers table and addresses table, one customer has one and only one address. Many customers might live at the same address.
 
 #### Relationship (users table and customers table)
 
@@ -164,7 +164,7 @@ Columns, data types, and constraints are listed below:
 * Street number (int, not null)
 * Street name (string(100), not null)
 * Suburb (string(100), not null)
-* Postcode_id (int, FK, not null) Links the address table and postcode table. Each address has its own postcode.
+* Postcode_id (int, FK, not null) Links the address table and postcode table. Each address has one and only one postcode. Many addresses may have same postcode.
 
 #### Relationship (addresses table and postcodes table)
 
@@ -196,7 +196,7 @@ Columns, data types, and constraints are listed below:
 * Expire date (string, not null)
 * Security number (int, not null)
 * Encrypted_card_no (string, not null)
-* Customer id (int, FK, not null). Links the payment methods table to the customers table.
+* Customer id (int, FK, not null). Links the payment methods table to the customers table. A payment accounts belongs to only one customer and one customer has one or many payment accounts.
 
 #### Relationship (payment accounts table and customers table)
 
@@ -212,10 +212,10 @@ Columns, data types, and constraints are listed below:
 * Id (PK, serial int, not null) Primary key
 * Order date (date, not null)
 * Ship date (date, not null)
-* Status (FK, int, not null). Links the orders table and order status table.
-* Customer id (FK, int, not null). Links the orders table and customers table.
-* Shipping method (FK, int, not null). Links the orders table and shipping methods table.
-* Payment account (FK, int, not null). Links the orders table and payment accounts table.
+* Status (FK, int, not null). Links the orders table and order status table. One order has one and only one status simultaneously.
+* Customer id (FK, int, not null). Links the orders table and customers table. One order belongs to one customer.
+* Shipping method (FK, int, not null). Links the orders table and shipping methods table. One order only has one shipping method. A shipping method can be selected by many orders.
+* Payment account (FK, int, not null). Links the orders table and payment accounts table. One order only be paid by one payment account. A payment account can be used to pay many orders.
 
 #### Relationship (order status table and orders table)
 
@@ -267,7 +267,7 @@ Columns, data types, and constraints are listed below:
 * Price(int, not null)
 * Stock(int, not null)
 * Create_date (date, not null)
-* Category(int, FK, not null). Links the products table and the categories table
+* Category(int, FK, not null). Links the products table and the categories table. One product belongs to only one category. A category may have many products.
 
 #### Creating join table
 
@@ -283,8 +283,8 @@ Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null)
 * Price (int, not null). Creating a price column again is to ensure that if the price of the product changes later, the price here remains unchanged. Without this column, if we update the product's price, the price in the order details also changes, which results in inaccurate data in this table.
-* Order id (int, FK, not null). Links the order details table and orders table
-* Product id (int, FK, not null). Links the product table and order details table
+* Order id (int, FK, not null). Links the order details table and orders table. One order detail must have a related order, and only relate to one order. One order may have many order details.
+* Product id (int, FK, not null). Links the product table and order details table. One order detail contains one product. A product may be included in many order details.
   
 These two columns link to the orders and products table.
 
@@ -323,8 +323,8 @@ Columns, data types, and constraints are listed below:
 * Id (PK, serial int, not null) Primary key
 * Comment (text)
 * Rating (int(0-5), not null)
-* Customer id (int, FK, not null) Links to the customers table
-* Product id (int, FK, not null). Links to the products table
+* Customer id (int, FK, not null) Links to the customers table. One review belongs to a particular customer. And a customer might have many reviews.
+* Product id (int, FK, not null). Links to the products table. One review relates to one product. And a product might have many reviews.
 
 #### Relationship (customers table and reviews table)
 
@@ -335,6 +335,134 @@ The relationship between the customers table and the reviews table is a one-to-m
 The relationship between the products table and the reviews table is also a one-to-many relationship. Many customers might purchase the same product and leave reviews for this product. A product might also not have been purchased by anyone and has no reviews. And each review only links to one particular product, and customers can not comment on two products in one review. They need to comment separately for different products as each has pros and cons. So a product might have zero or many reviews. A review relates to one and only one product.
 
 ---
+
+## Project models
+
+Each model is an class with base class called db.model. DB is an instance of SQLAlchemy class.
+db.Column defines a column. The parameter of db.column defines data type, keys and constraints.
+
+Each schema is an class with base class called ma.Schema. MA is an instance of Marshmallow class.
+
+* Address
+  
+  Address model create adress table in the database. It has its tablename as addresses.
+
+  Fields of the model includes:
+
+  * id
+  * street_number
+  * street_name
+  * suburb
+  * postcode_id
+
+    postcode_id is the foreign key that relates to the postcode in the postcodes table. This field must not be null. Because each address must have a postcode. This is the constraints of this field.
+
+  Below is the code snippet for the address model(includes data types, constraints and keys).
+  ![Address_model_fields](docs/Address_model_fields.png)
+
+  Address model has one-to-many relationship with postcode table. One address has one and only one postcode. Many addresses may have same postcode. To achieve this relationship, I have created a foreign key (postcode_id) in the address model to link these two models. And I used relationship() method from sqlalchemy to connect these two tables. Within each model, I assigned a variable to this method, and name the variable as the name of the related model. The variable will be single if the related model is on the many side of the relationship. And it will be plural if the related model is on the one side of the relationship. Because on the one side of the relationship, it means each record links to many records on the many side of the relationship. For example, the name of the relationship() method is postcode in the address model and the name of the relationship() method is addresses in the postcode model. Address is on many side and each address only has one postcode. Postcode is on one side and each postcode links to many addresses. Within each relationship() method, the first parameter is the related model name. Followed by a parameter called 'back_populates'. Back_populates indicate the name of the relationship() method in the related model. For example, 'back_populates'='addresses' in the address model. This is same for all relationship() method in this project.
+  
+  If the id of the current model has been used as the foreign key in the related model, developers could also define cascade deletion in the relationship() method of the current model. For example, address model links to the customer model, and the id of address table is used as foreign key in the customer table. So I can define cascade deletion in the address model, once the instance of the current model has been deleted, all related instance in the other table will be deleted as well. If cascade deletion is not defined, the instance of the current model can not be deleted if the id of the instance is used as the foreign key in the related table.
+
+  Schema defines the response back to the client. It will return fields listed in the meta class. It allows me to display data from the related model together with the data from the current model. This is achieved by using fields.Nested function. For example, I have used fields.Nested function from marshamllow to display associated postcode data in the address data. Nesting properties also allows me to determine which fields of the postcode model should be displayed in the address data. This can be achieved by using only or exclude parameter within the function. Fields.Nested function should be defined within the schema and assigns to the same variable as the relationship() method. This variable should also be added into the fields list.
+
+  ![Address_model_schema](docs/Address_model_schema.png)
+
+  The rest of my models also used relationship() method in model and fields.Nested function to establish the relationship between models.
+
+---
+
+* Customer
+
+  Customer model creates customer table in the database. It has its tablename as customers.
+
+  Fields of the model includes:
+
+  * id
+  * phone
+  * user_id
+  * address_id
+  
+  user_id is the foreign key that relates to the id in the user table. This field must not be null, because a customer can not be created before the user.
+
+  address_id is the foreign key that refers to the id in the address table. This field can be null, because a customer can register first, then update their address.
+
+  Below is the code snippet for the customer model(includes data types, constraints and keys).
+
+  Customer model has one-to-one relationship with user model. One customer can not be created before a user and one customer links to one user. A user could be created before the customer, it could links to the admin user or customer. Each user links to zero or one customer. I have created a foreign key (user_id) to link these two models.
+  Same as address model, I connect these two models with db.relationships, and name it as user and customer in these models. I have also use fields.Nested in schema to determine the fields in the HTTP response. I only want to display user id, first name and last name in the response, other fields are confidential and should not be returned.
+
+  Customer model has one-to-many relationship with address model. One customer may have zero or one address in the system and many customer might live at the same address. I have created a foreign key (address_id) to link these two models. With the db.relationship method, I named it as address in user model because it is on one side of the relationship and named it as customers on the many side of the relationship. I will display all fields in the addressschema.
+
+  Customer model also links to payment account model, order model and review model. The id of the customer has been used as the foreign key in these three models. I have defined cascade deletion for all of them. If a customer has been deleted, all related instance in these three models will be delted as well.
+
+  Within the customershema, I have excluded payment account and customer id for the orders field, because payment account is confidential and customer id has already been included in the fields as id.  I have also exclude customer_id in the reviews field and only display encrypted_card_no in the payment_accounts fields. Encrypted_card_no only show some digits of the card number, which is more secure.
+
+---
+
+* Payment_account
+
+  Paymentaccount model creates paymentaccount table in the database. It has its tablename as payment_accounts.
+
+  Fields of the model includes:
+
+  * id
+  * card_no
+  * owner_name
+  * expire)date
+  * security_no
+  * encrypt_card_no
+  * customer_id
+
+  customer_id is the foreign key that relates to the id in the customer model. This field must not be null. A payment account must belongs to a specific customer.
+
+  Paymentaccount model has one-to-many relationship with customer model. One customer may have one or many payment accounts. One payment account belongs to only one customer. I have created a foreign key (customer_id) to link these two models. With the relationship() method, I named it as customer in the paymentaccount model(many-side) and payment_accounts in the customer model(one-side). Paymentaccount schema will not return any information about the customer model. The information of paymentaccount will be displayed in the customer schema, because payment_accounts is one of the information of the customer. I have also created a method called encrypt_card_no. This method will only display several digits of the card number, which is more secure than displaying all card numbers.
+
+---
+
+* Order
+
+  Order model creates order table in the database. It has its tablename as orders.
+
+  Fields of the model includes:
+
+  * id
+  * order_date
+  * ship_date
+  * order_status_id
+  * customer_id
+  * shipping_method_id
+
+  order_status_id is the foreign key that relates to the id in the orderstatus model. This field must not be null, it has default value as 1. Each order must have a status.
+
+  customer_id is the foreign key that relates to the id in the customer model. This field must not be null, because a order must have a customer.
+
+  shipping_method_id is the foreign key that relates to the id in the shipping_method model. This field must not be null as each order must be shipped with a specific method.
+
+  Orderstatus model has one-to-many relationship with order model. One order has only one status simultaneously. Many orders might have the same status. I have created a foreign key (order_status_id) to link these two models. With the relationship() method, I named it as order_status in order_status model(many-side) and orders in the orderstatus model(many-side). I will only return the type of the order status in the orderschema, which is eaiser for user to understand.
+
+  
+* Product
+* Order_details
+* Review
+
+* Category
+  
+  Category model creates category table in the database. It has its tablename as categories.
+
+  Fields of the model includes:
+
+  * id
+  * type
+
+  Below is the code snippet for the category model(included data types, constraints and keys).
+
+  Category model has
+
+* Order_status
+* Postcode
+* Shipping_method
+* User
 
 ## Project Management
 
@@ -465,3 +593,12 @@ If there is any additional requirements, I can easily create a new card in the b
 * python-dotenv
 
   Developers could configure flask app in a separate environment file rather than in the main python file, such as which python file is the main python file, what is the flask environment and what is the port number for the app. Python-dotenv is used to link the environment file to flask and causes the flask app to load the environment variables from this environment file every time developers run the app.
+
+  ---
+
+## Database creation instruction
+
+* Create a database called: smoonypaws
+* create a user called 'smonnypaws_dev' with all access rights to the databse and a password: password123
+* Port number is default which is 5432.
+  

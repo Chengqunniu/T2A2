@@ -162,7 +162,7 @@ def customer_register():
         # Response back to the client, user marshmallow to serialize data
         return CustomerSchema(exclude='address_id').dump(customer), 201
     except IntegrityError:
-        return {'error': 'Address id does not exists'}, 409
+        return {'error': 'Address id does not exists, you can update it later.'}, 409
     
 
 @user_bp.route('/customer/')

@@ -20,12 +20,12 @@ class User(db.Model):
     email = db.Column(db.String, nullable=False, unique=True)
     is_admin = db.Column(db.Boolean, default=IS_ADMIN[1])
 
-    customers = db.relationship('Customer', back_populates='user', cascade='all, delete')
+    customer = db.relationship('Customer', back_populates='user', cascade='all, delete')
 
 class UserSchema(ma.Schema):
     ''' Schema for user'''
 
-    customers = fields.List(fields.Nested('CustomerSchema', only=['id', 'phone']))
+    customer = fields.List(fields.Nested('CustomerSchema', only=['id', 'phone']))
     
     # Validate password entered, make sure it is a string
     # Make sure the password is at least 8 characters
@@ -66,5 +66,5 @@ class UserSchema(ma.Schema):
 
 
     class Meta:
-        fields = ('id', 'first_name', 'last_name', 'email','password', 'is_admin', 'customers')
+        fields = ('id', 'first_name', 'last_name', 'email','password', 'is_admin', 'customer')
         ordered = True # Display data in the order as listed in the fields above

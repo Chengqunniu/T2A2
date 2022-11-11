@@ -12,7 +12,7 @@ class Customer(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
     address_id = db.Column(db.Integer, db.ForeignKey("addresses.id"))
 
-    user = db.relationship('User', back_populates='customers')
+    user = db.relationship('User', back_populates='customer')
     address = db.relationship('Address', back_populates='customers')
     payment_accounts = db.relationship('PaymentAccount', back_populates='customer', cascade='all, delete')
     orders = db.relationship('Order', back_populates='customer', cascade='all, delete')

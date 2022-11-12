@@ -231,6 +231,8 @@ def update_customer_address():
     # Response back to the client, user marshmallow to serialize data
     return CustomerSchema(exclude='address_id').dump(customer)
 
+
+
 @user_bp.route('/customer/address/')
 @jwt_required()
 def get_all_addresses():
@@ -243,6 +245,24 @@ def get_all_addresses():
 
     # Response back to the client, user marshmallow to serialize data
     return AddressSchema(many=True).dump(addresses)
+
+
+@user_bp.route('/customer/address/', methods=['POST'])
+@jwt_required()
+def create_address():
+    '''Create address'''
+
+    # Check address exists or not, if not create a new address
+    # Return the new address id
+    address_id = check_address()
+
+    # Create SQL statement : select the address with the specific id
+    stmt = db.select(Address).filter_by(id=address_id)
+    address = db.session.scalar(stmt)  # Return the address found
+
+    # Response back to the client, user marshmallow to serialize data
+    return AddressSchema().dump(address)
+
 
 @user_bp.route('/customer/address/<int:address_id>/')
 def get_single_address(address_id):

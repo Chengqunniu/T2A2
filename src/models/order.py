@@ -25,7 +25,7 @@ class Order(db.Model):
 class OrderSchema(ma.Schema):
     ''' Schema for Order'''
     
-    customer = fields.List(fields.Nested('CustomerSchema', only=['id']))
+    customer = fields.List(fields.Nested('CustomerSchema', only=['id', 'phone', 'address']))
     shipping_method = fields.Nested('ShippingMethodSchema', exclude=['id'])
     order_details = fields.List(fields.Nested('OrderDetailSchema'))
     order_status = fields.Nested('OrderStatusSchema', exclude=['id'])

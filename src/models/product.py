@@ -14,7 +14,6 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     create_date = db.Column(db.Date, nullable=False)
-
     category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
 
     category = db.relationship('Category', back_populates='products')

@@ -142,8 +142,8 @@ Columns, data types, and constrains are listed below:
 * Id (PK, serial int, not null) Primary key
 * Email (string, not null)
 * Phone (int, not null)
-* User id (int, FK, not null). Links the users table and customers table, one customer is one user.
-* Address(int, FK, not null). Links the customers table and addresses table, one customer has one and only one address. Many customers might live at the same address.
+* User id (int, FK, not null, unique). Links the users table and customers table, one customer is one user.
+* Address(int, FK). Links the customers table and addresses table, one customer has zeor or one address in the database. Many customers might live at the same address.
 
 #### Relationship (users table and customers table)
 
@@ -151,7 +151,7 @@ The relationship between the users table and the customers table is a one-to-one
 
 #### Relationship (addresses table and customers table)
 
-The relationship between the addresses table and the customers table is a one-to-many relationship. A user typically lives in one place and uses this place for delivery. And many customers might live together and shop separately. So a user has one and only one address, while an address might accommodate one or many customers.
+The relationship between the addresses table and the customers table is a one-to-many relationship. A user typically lives in one place and uses this place for delivery, they could provide their address after they logged in, therefore they might have no address in the system. And many customers might live together and shop separately. So a user has one and only one address, while an address might accommodate one or many customers.
 
 ---
 
@@ -362,7 +362,7 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
 
   Address model has one-to-many relationship with postcode table. One address has one and only one postcode. Many addresses may have same postcode. To achieve this relationship, I have created a foreign key (postcode_id) in the address model to link these two models. And I used relationship() method from sqlalchemy to connect these two tables. Within each model, I assigned a variable to this method, and name the variable as the name of the related model. The variable will be single if the related model is on the many side of the relationship. And it will be plural if the related model is on the one side of the relationship. Because on the one side of the relationship, it means each record links to many records on the many side of the relationship. For example, the name of the relationship() method is postcode in the address model and the name of the relationship() method is addresses in the postcode model. Address is on many side and each address only has one postcode. Postcode is on one side and each postcode links to many addresses. Within each relationship() method, the first parameter is the related model name. Followed by a parameter called 'back_populates'. Back_populates indicate the name of the relationship() method in the related model. For example, 'back_populates'='addresses' in the address model. This is same for all relationship() method in this project.
   
-  If the id of the current model has been used as the foreign key in the related model, developers could also define cascade deletion in the relationship() method of the current model. For example, address model links to the customer model, and the id of address table is used as foreign key in the customer table. So I can define cascade deletion in the address model, once the instance of the current model has been deleted, all related instance in the other table will be deleted as well. If cascade deletion is not defined, the instance of the current model can not be deleted if the id of the instance is used as the foreign key in the related table.
+  If the id of the current model has been used as the foreign key in the related model, developers could also define cascade deletion in the relationship() method of the current model. For example, address model links to the customer model, and the id of address table is used as foreign key in the customer table. So I can define cascade deletion in the address model, once the instance of the current model has been deleted, all related instance in the other table will be deleted as well. If cascade deletion is not defined, the instance of the current model can not be deleted if the id of the instance is used as the foreign key in the related table. In this case, the address can not be deleted if its being used by the customer.
 
   Schema defines the response back to the client. It will return fields listed in the meta class. It allows me to display data from the related model together with the data from the current model. This is achieved by using fields.Nested function. For example, I have used fields.Nested function from marshamllow to display associated postcode data in the address data. Nesting properties also allows me to determine which fields of the postcode model should be displayed in the address data. This can be achieved by using only or exclude parameter within the function. Fields.Nested function should be defined within the schema and assigns to the same variable as the relationship() method. This variable should also be added into the fields list.
 
@@ -396,7 +396,7 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
 
   Customer model also links to payment account model, order model and review model. The id of the customer has been used as the foreign key in these three models. I have defined cascade deletion for all of them. If a customer has been deleted, all related instance in these three models will be delted as well.
 
-  Within the customershema, I have excluded payment account and customer id for the orders field, because payment account is confidential and customer id has already been included in the fields as id.  I have also exclude customer_id in the reviews field and only display encrypted_card_no in the payment_accounts fields. Encrypted_card_no only show some digits of the card number, which is more secure.
+  Within the customershema, I have excluded payment account and customer id for the orders schema, because payment account is confidential and customer id has already been included in the customer schema as id.  I have also exclude customer_id in the reviews schema and only display encrypted_card_no in the payment_accounts schema. Encrypted_card_no only show some digits of the card number, which is more secure.
 
 ---
 
@@ -439,12 +439,77 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
 
   shipping_method_id is the foreign key that relates to the id in the shipping_method model. This field must not be null as each order must be shipped with a specific method.
 
-  Orderstatus model has one-to-many relationship with order model. One order has only one status simultaneously. Many orders might have the same status. I have created a foreign key (order_status_id) to link these two models. With the relationship() method, I named it as order_status in order_status model(many-side) and orders in the orderstatus model(many-side). I will only return the type of the order status in the orderschema, which is eaiser for user to understand.
+  Orderstatus model has one-to-many relationship with order model. One order has only one status simultaneously. Many orders might have the same status. I have created a foreign key (order_status_id) to link these two models. With the relationship() method, I named it as order_status in order_status model(many-side) and orders in the orderstatus model(one-side). I will only return the type of the order status in the orderschema, which is eaiser for user to understand.
 
-  
-* Product
+  Customer model has one-to-many relationship with order model. One order belongs or placed by only one customer. A customer might have zero or many orders. I have created a foreign key (customer_id) to link these two models. With the relationship() method, I named it as customer in the order model(many-side) and orders in the customer model(one-side). I will only return the id, phone number and address of the customer in the order model. These fields are related to the order.
+
+  ShippingMethod model has one-to-many relationship with order model. One order has only one shipping method. Many orders may have the same shipping method. I have created a foreign key (shipping_method_id) to link these two models.
+  With the relationship() method, I named it as shipping_method in the order model and orders in the shipping method model. I have decided to display type and priec of the shipping method in the order schema as they have more meanings for the customer. 
+
+  Order model also links to the orderdetail model. The id of the order model has been used as the foreign key in the orderdetail model. I have defined cascade deletion for orderdetials, once the instance of the order model has been deleted, all related instance in the orderdetail model will be delted as well. I have also decided to display all fields of orderdetail schema in the order schema.
+
+  ---
+
 * Order_details
+
+  OrderDetail model creates order_detials table in the database. It has its tablename as order_details.
+
+  Fields of the model includes:
+
+  * id
+  * price
+  * quantity
+  * order_id
+  * product_id
+
+  order_id is the foreign key that relates to the id in the order model. This field must not be null because an order detail can not be created before the order. 
+
+  product_id is the foreign key that relates to the id in the product model. This field must not be null, because an order detail can not be created before the product either.
+
+  OrderDetail model has one-to-many relationship with order model. One order has one or many order details. One orderdetail links or belongs to only one order. I have created a foreign key (order_id) to link these two models.
+  With the relationship() method, I named it as order in the orderdetail model(many-side) and order_details in the order model(one-side). As mentioned above, I will display all fields of orderdetail schema in the order schema. Therefore, I will only display order id in the orderdetail schema to indicate which order it links to. And will not display other fields again to avoid duplication.
+
+  OrderDetail model has one-to-many relationship with product model. One order detail contains only one product. One product may be included in one or many order details. I have created a foreign key (product_id) to link these two models. With the relationship() method, I named it as product in the orderdetail model(many-side) and order_details in the product model(one-side). I will only display the product id and name in the orderdetail schema. Other fiedls like description, create_date and stock are not normally display in the order details. I have also create a field called price in the orderdetail model to record the price at the time of pruchases. I use this field in the schema to display the price of the product instead of using the price field in the product schema. The reason is if I use the price field in the product schema and the price has been updated later, the price in the orderdetail schema will change as well. Thus the data becomes inaccurate. Therefore I create a new field in the orderdetail model to keep the price the same as the price when the customer placed the order.
+
+---
+
+* Product
+
+  Product model creates product table in the database. It has its tablename as products.
+
+  Fields of the model includes:
+
+  * id
+  * name
+  * description
+  * price
+  * stock
+  * create_date
+  * category_id
+
+  category_id is the foreign key that relates to the id in the category model. This field must not be null as each product must belongs to a category.
+
+  Product model has one-to-many relationship with the category model. One product belongs to only one category. One category may contains zero or many products. I have created a foreign key (category_id) to link these two models.
+  With the relationship() method, I named it as category in the prodcut model(many-side) and products in the category
+  model(one-side). I decided to only display the type of the category int he prodcut schema, which has more meanings than id.
+
+  Product model also links to the review model. The id of the product model has been used as the foreign key in the review model. I have not define cascade deleteion for this relationship. Therefore, a product can not be deleted if it has reviews related to it. For the schema, I decided to display all fields of the reviewschema except prodcut id. Which has already been displayed in the productschema.
+
+  ---
+  
 * Review
+
+  Review model creates review table in the database. It has its tablename as reviews.
+
+  Fields of the model includes:
+
+  * id
+  * comment
+  * rating
+  * customer_id
+  * product_id
+
+  customer_id is the foreign key that relates to the id in the customer model. One customer might leave zero or many reviews. One review could only be made by one customer. 
 
 * Category
   

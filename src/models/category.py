@@ -14,7 +14,6 @@ class Category(db.Model):
     products = db.relationship('Product', back_populates='category')
 
 
-
 class CategorySchema(ma.Schema):
     ''' Schema for category'''
 

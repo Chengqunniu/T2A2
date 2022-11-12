@@ -343,6 +343,8 @@ db.Column defines a column. The parameter of db.column defines data type, keys a
 
 Each schema is an class with base class called ma.Schema. MA is an instance of Marshmallow class.
 
+---
+
 * Address
   
   Address model create adress table in the database. It has its tablename as addresses.
@@ -354,21 +356,24 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   * street_name
   * suburb
   * postcode_id
+  
+### Foreign keys
 
     postcode_id is the foreign key that relates to the postcode in the postcodes table. This field must not be null. Because each address must have a postcode. This is the constraints of this field.
 
-  Below is the code snippet for the address model(includes data types, constraints and keys).
-  ![Address_model_fields](docs/Address_model_fields.png)
+
+### Relationship (address - postcode)
 
   Address model has one-to-many relationship with postcode table. One address has one and only one postcode. Many addresses may have same postcode. To achieve this relationship, I have created a foreign key (postcode_id) in the address model to link these two models. And I used relationship() method from sqlalchemy to connect these two tables. Within each model, I assigned a variable to this method, and name the variable as the name of the related model. The variable will be single if the related model is on the many side of the relationship. And it will be plural if the related model is on the one side of the relationship. Because on the one side of the relationship, it means each record links to many records on the many side of the relationship. For example, the name of the relationship() method is postcode in the address model and the name of the relationship() method is addresses in the postcode model. Address is on many side and each address only has one postcode. Postcode is on one side and each postcode links to many addresses. Within each relationship() method, the first parameter is the related model name. Followed by a parameter called 'back_populates'. Back_populates indicate the name of the relationship() method in the related model. For example, 'back_populates'='addresses' in the address model. This is same for all relationship() method in this project.
   
-  If the id of the current model has been used as the foreign key in the related model, developers could also define cascade deletion in the relationship() method of the current model. For example, address model links to the customer model, and the id of address table is used as foreign key in the customer table. So I can define cascade deletion in the address model, once the instance of the current model has been deleted, all related instance in the other table will be deleted as well. If cascade deletion is not defined, the instance of the current model can not be deleted if the id of the instance is used as the foreign key in the related table. In this case, the address can not be deleted if its being used by the customer.
+  If the id of the current model has been used as the foreign key in the related model, developers could also define cascade deletion in the relationship() method of the current model. For example, address model links to the customer model, and the id of address table is used as foreign key in the customer table. So I can define cascade deletion in the address model, once the instance of the current model has been deleted, all related instance in the other table will be deleted as well. If cascade deletion is not defined, the instance of the current model can not be deleted if the id of the instance is used as the foreign key in the related table. In this case, the address can not be deleted if its being used by the customer. Also in this project, I did not allow customer to delete a particular address. Assume they rent an apartment and after the lease ends, they move out and try to delete the address. If the system telling them the deletion was unsuccessful, they might know that people who moves into this place after them is also a customer, which was not good for the other customer.
 
   Schema defines the response back to the client. It will return fields listed in the meta class. It allows me to display data from the related model together with the data from the current model. This is achieved by using fields.Nested function. For example, I have used fields.Nested function from marshamllow to display associated postcode data in the address data. Nesting properties also allows me to determine which fields of the postcode model should be displayed in the address data. This can be achieved by using only or exclude parameter within the function. Fields.Nested function should be defined within the schema and assigns to the same variable as the relationship() method. This variable should also be added into the fields list.
 
-  ![Address_model_schema](docs/Address_model_schema.png)
-
   The rest of my models also used relationship() method in model and fields.Nested function to establish the relationship between models.
+
+  Below is the code snippet for the address model(includes data types, constraints and keys).
+  ![Address_model](docs/Address_model.png)
 
 ---
 
@@ -379,24 +384,31 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   Fields of the model includes:
 
   * id
-  * phone
-  * user_id
+  * phone(unique)
+  * user_id(unique) - limits each use only links to one customer
   * address_id
-  
+
+### Foreign Keys
+
   user_id is the foreign key that relates to the id in the user table. This field must not be null, because a customer can not be created before the user.
 
   address_id is the foreign key that refers to the id in the address table. This field can be null, because a customer can register first, then update their address.
 
-  Below is the code snippet for the customer model(includes data types, constraints and keys).
+### Relationship (customer - user)
 
   Customer model has one-to-one relationship with user model. One customer can not be created before a user and one customer links to one user. A user could be created before the customer, it could links to the admin user or customer. Each user links to zero or one customer. I have created a foreign key (user_id) to link these two models.
   Same as address model, I connect these two models with db.relationships, and name it as user and customer in these models. I have also use fields.Nested in schema to determine the fields in the HTTP response. I only want to display user id, first name and last name in the response, other fields are confidential and should not be returned.
+
+### Relationship (customer - address)
 
   Customer model has one-to-many relationship with address model. One customer may have zero or one address in the system and many customer might live at the same address. I have created a foreign key (address_id) to link these two models. With the db.relationship method, I named it as address in user model because it is on one side of the relationship and named it as customers on the many side of the relationship. I will display all fields in the addressschema.
 
   Customer model also links to payment account model, order model and review model. The id of the customer has been used as the foreign key in these three models. I have defined cascade deletion for all of them. If a customer has been deleted, all related instance in these three models will be delted as well.
 
   Within the customershema, I have excluded payment account and customer id for the orders schema, because payment account is confidential and customer id has already been included in the customer schema as id.  I have also exclude customer_id in the reviews schema and only display encrypted_card_no in the payment_accounts schema. Encrypted_card_no only show some digits of the card number, which is more secure.
+
+  Below is the code snippet for the customer model(includes data types, constraints and keys).
+  ![Customer_model](docs/Customer_model.png)
 
 ---
 
@@ -407,16 +419,23 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   Fields of the model includes:
 
   * id
-  * card_no
+  * card_no(unique)
   * owner_name
   * expire)date
   * security_no
   * encrypt_card_no
   * customer_id
 
+### Foreign Keys
+
   customer_id is the foreign key that relates to the id in the customer model. This field must not be null. A payment account must belongs to a specific customer.
 
+### Relationship (paymentaccount - customer)
+
   Paymentaccount model has one-to-many relationship with customer model. One customer may have one or many payment accounts. One payment account belongs to only one customer. I have created a foreign key (customer_id) to link these two models. With the relationship() method, I named it as customer in the paymentaccount model(many-side) and payment_accounts in the customer model(one-side). Paymentaccount schema will not return any information about the customer model. The information of paymentaccount will be displayed in the customer schema, because payment_accounts is one of the information of the customer. I have also created a method called encrypt_card_no. This method will only display several digits of the card number, which is more secure than displaying all card numbers.
+
+  Below is the code snippet for the paymentaccount model(includes data types, constraints and keys).
+  ![Paymentaccount_model](docs/Paymentaccount_model.png)
 
 ---
 
@@ -432,6 +451,8 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   * order_status_id
   * customer_id
   * shipping_method_id
+  
+### Foreign Keys
 
   order_status_id is the foreign key that relates to the id in the orderstatus model. This field must not be null, it has default value as 1. Each order must have a status.
 
@@ -439,14 +460,23 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
 
   shipping_method_id is the foreign key that relates to the id in the shipping_method model. This field must not be null as each order must be shipped with a specific method.
 
+### Relationship(orderstatus - order)
+
   Orderstatus model has one-to-many relationship with order model. One order has only one status simultaneously. Many orders might have the same status. I have created a foreign key (order_status_id) to link these two models. With the relationship() method, I named it as order_status in order_status model(many-side) and orders in the orderstatus model(one-side). I will only return the type of the order status in the orderschema, which is eaiser for user to understand.
 
+### Relationship (customer - order)
+
   Customer model has one-to-many relationship with order model. One order belongs or placed by only one customer. A customer might have zero or many orders. I have created a foreign key (customer_id) to link these two models. With the relationship() method, I named it as customer in the order model(many-side) and orders in the customer model(one-side). I will only return the id, phone number and address of the customer in the order model. These fields are related to the order.
+
+### Relationship (shippingmethod - order)
 
   ShippingMethod model has one-to-many relationship with order model. One order has only one shipping method. Many orders may have the same shipping method. I have created a foreign key (shipping_method_id) to link these two models.
   With the relationship() method, I named it as shipping_method in the order model and orders in the shipping method model. I have decided to display type and priec of the shipping method in the order schema as they have more meanings for the customer. 
 
   Order model also links to the orderdetail model. The id of the order model has been used as the foreign key in the orderdetail model. I have defined cascade deletion for orderdetials, once the instance of the order model has been deleted, all related instance in the orderdetail model will be delted as well. I have also decided to display all fields of orderdetail schema in the order schema.
+
+  Below is the code snippet for the order model(includes data types, constraints and keys).
+  ![Order_model](docs/Order_model.png)
 
   ---
 
@@ -462,14 +492,23 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   * order_id
   * product_id
 
+### Foreign Keys
+
   order_id is the foreign key that relates to the id in the order model. This field must not be null because an order detail can not be created before the order. 
 
   product_id is the foreign key that relates to the id in the product model. This field must not be null, because an order detail can not be created before the product either.
 
+### Relationship (orderdetail - order)
+
   OrderDetail model has one-to-many relationship with order model. One order has one or many order details. One orderdetail links or belongs to only one order. I have created a foreign key (order_id) to link these two models.
   With the relationship() method, I named it as order in the orderdetail model(many-side) and order_details in the order model(one-side). As mentioned above, I will display all fields of orderdetail schema in the order schema. Therefore, I will only display order id in the orderdetail schema to indicate which order it links to. And will not display other fields again to avoid duplication.
 
+### Relationship (orderdetail - product)
+
   OrderDetail model has one-to-many relationship with product model. One order detail contains only one product. One product may be included in one or many order details. I have created a foreign key (product_id) to link these two models. With the relationship() method, I named it as product in the orderdetail model(many-side) and order_details in the product model(one-side). I will only display the product id and name in the orderdetail schema. Other fiedls like description, create_date and stock are not normally display in the order details. I have also create a field called price in the orderdetail model to record the price at the time of pruchases. I use this field in the schema to display the price of the product instead of using the price field in the product schema. The reason is if I use the price field in the product schema and the price has been updated later, the price in the orderdetail schema will change as well. Thus the data becomes inaccurate. Therefore I create a new field in the orderdetail model to keep the price the same as the price when the customer placed the order.
+
+  Below is the code snippet for the orderdetail model(includes data types, constraints and keys).
+  ![Orderdetail_model](docs/Orderdetail_model.png)
 
 ---
 
@@ -480,20 +519,25 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   Fields of the model includes:
 
   * id
-  * name
+  * name(unique)
   * description
   * price
   * stock
   * create_date
   * category_id
 
+### Foreign Keys
+
   category_id is the foreign key that relates to the id in the category model. This field must not be null as each product must belongs to a category.
 
-  Product model has one-to-many relationship with the category model. One product belongs to only one category. One category may contains zero or many products. I have created a foreign key (category_id) to link these two models.
-  With the relationship() method, I named it as category in the prodcut model(many-side) and products in the category
-  model(one-side). I decided to only display the type of the category int he prodcut schema, which has more meanings than id.
+### Relationship (product - category)
+
+  Product model has one-to-many relationship with the category model. One product belongs to only one category. One category may contains zero or many products. I have created a foreign key (category_id) to link these two models. With the relationship() method, I named it as category in the prodcut model(many-side) and products in the category model(one-side). I decided to only display the type of the category int he prodcut schema, which has more meanings than id.
 
   Product model also links to the review model. The id of the product model has been used as the foreign key in the review model. I have not define cascade deleteion for this relationship. Therefore, a product can not be deleted if it has reviews related to it. For the schema, I decided to display all fields of the reviewschema except prodcut id. Which has already been displayed in the productschema.
+
+  Below is the code snippet for the product model(includes data types, constraints and keys).
+  ![Product_model](docs/Product_model.png)
 
   ---
   
@@ -509,7 +553,24 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   * customer_id
   * product_id
 
-  customer_id is the foreign key that relates to the id in the customer model. One customer might leave zero or many reviews. One review could only be made by one customer. 
+### Foreign keys
+
+  customer_id is the foreign key that relates to the id in the customer model. This field must not be null, because each reivew must be made by a customer. And review can not be created before the customer.
+
+  product_id is the foreign key that refers to the id in the product model. This field must not be null, because each review must link to a product. It needs to have product first, then create review for the product.
+
+### Relationship (customer - review)
+
+  Reivew model has one-to-many relationship with the customer model. One customer might leave zero or many reviews. One review could only be made by one customer. I have created a foreign key(customer_id) to link these two models. With this relationship() method, I named it as customer in the review model(many-side) and reviews in the customer model(one-side). I decided to display all fields of review model in the customer schema, so within the review schema, I am not going to display any fields from customer model.
+
+### Relationship (product - review)
+
+  Review model has one-to-many relationship with the product model. One product may have zero or many reviews. One review only links to one product. I have created a foreign key (product_id) to link these two models. With the relationship() method, I named it as product in the review model(many-side) and reviews in the product model(one-side). Normally a review will have product id and name, as review model already has field product_id, I only need to display the name field from the product model in the review schema.
+
+  Below is the code snippet for the review model(includes data types, constraints and keys).
+  ![Review_model](docs/Address_model.png)
+
+  ---
 
 * Category
   
@@ -518,16 +579,82 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   Fields of the model includes:
 
   * id
-  * type
+  * type(unique)
+
+  Category model relates to the product model, the relationship has been described above. And I decided not to display any fields from the product model.
 
   Below is the code snippet for the category model(included data types, constraints and keys).
+  ![Category_model](docs/Cateogry_model.png)
 
-  Category model has
+---
 
-* Order_status
+* Orderstatus
+  
+  Orderstatus model creates orderstatus table in the database. It has its tablename as order_statues.
+
+  Fields of the model includes:
+
+  * id
+  * type(unique)
+
+  Orderstatus model relateds to the order model, the relationship has been described above. And I decided not to display any fields from order model.
+
+    Below is the code snippet for the orderstatus model(includes data types, constraints and keys).
+  ![Orderstatus_model](docs/Orderstatus_model.png)
+
+---
+
 * Postcode
+
+  Postcode model creates postcode table in the database. It has its tablename as postcodes.
+
+  Fields of the model includes:
+
+  * postcode
+  * state
+
+  Postcode model relates to the address model, the relationship has been described above. And I decided not to display any fields from the address model.
+
+  Below is the code snippet for the postcode model(included data types, constraints and keys).
+  ![Postcode_model](docs/Postcode_model.png)
+
+  ---
+
 * Shipping_method
+
+  Shippingmethod model creates shippingmethod table in the database. It has its tablename as shipping_methods.
+
+  Fields of the model includes:
+
+  * id
+  * type(unique)
+  * price
+
+  Shippingmethod model relates to the order model, the relationship has been described above. And I decided not to display any fields from the order model.
+
+  Below is the code snippet for the shippingmethod model(included data types, constraints and keys).
+  ![Shippingmethod_model](docs/Shippingmethod_model.png)
+
+  ---
+
 * User
+
+  User model creates user table in the database. It has its tablename as users.
+
+  Fields of the model includes:
+
+  * id
+  * first_name
+  * last_name
+  * password
+  * email(unique)
+  * is_admin(default is false)
+
+  User model relates to the customer model, the relationship has been described above. I decided to display the customer id and phone number in the user schema.
+
+  Below is the code snippet for the user model(included data types, constraints and keys).
+  ![User_model_1](docs/User_model_1.png)
+  ![User_model_2](docs/User_model_2.png)
 
 ## Project Management
 
@@ -549,6 +676,8 @@ Kanban also allows team to continuously deliver their project to the skateholder
 Trello is one of tools used for creating kanban board. It is a visualised project management tool that allows users to organize their projects into cards, creating different stages or columns and set the work-in-progress limits. It also allows users to add timeline, label and checklist for each card. Users could arrange task based on the priority and timeline. During development, they can use the checklist to double check whether all requirements of this task has been achieved. Because it is a visualised tool, it is easy for developers and teams to understand what needs to be done and in what order.
 
 ### In order to use trello and kanban board for this project:
+
+[Link to trello board](https://trello.com/invite/b/uxTmgbMN/ATTI0841f232ed008b1eadfeca136d50d844634807FD/t2a2-coder-avademy)
 
 Firstly, I divided the project into small components and create cards for each of them. Each card has a checklist, includes requirements for each component. I had set different priorites and due date for each card, which helps me to make sure I am doing the tasks in the right order.
 I have created cards for:

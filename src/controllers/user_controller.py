@@ -155,14 +155,14 @@ def customer_register():
             phone = data['phone'],
             user_id = get_jwt_identity(),
             address_id = data['address_id']
-        )
+            )
         # Add and commit user to DB
         db.session.add(customer)
         db.session.commit()
         # Response back to the client, user marshmallow to serialize data
-        return CustomerSchema(exclude='address_id').dump(customer), 201
+        return CustomerSchema(exclude=['address_id']).dump(customer), 201
     except IntegrityError:
-        return {'error': 'Address id does not exists, you can update it later.'}, 409
+        return {'error': f'User with id {get_jwt_identity()} has already been registered with a customer.'}, 409
     
 
 @user_bp.route('/customer/')
@@ -175,10 +175,11 @@ def get_all_customers():
     stmt = db.select(Customer)
     customers = db.session.scalars(stmt)  # Return all customers
     # Response back to the client, user marshmallow to serialize data
-    return CustomerSchema(many=True, exclude='address_id').dump(customers)
+    return CustomerSchema(many=True, exclude=['address_id']).dump(customers)
 
 
 @user_bp.route('/customer/<int:customer_id>/')
+@jwt_required()
 def get_single_customer(customer_id):
     '''Allow admin user to get information abobut a specific customer'''
     authorize()
@@ -189,12 +190,12 @@ def get_single_customer(customer_id):
     # If not exists, return error message
     if customer:
         # Response back to the client, user marshmallow to serialize data
-        return CustomerSchema(exclude='address_id').dump(customer)
+        return CustomerSchema(exclude=['address_id']).dump(customer)
     else:
-        return {'error': f'user not found with id {customer_id}'}, 404
+        return {'error': f'Customer not found with id {customer_id}'}, 404
 
 
-@user_bp.route('/customer/update/phone', methods=['PUT', 'PATCH'])
+@user_bp.route('/customer/update/phone/', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_customer_phone():
     '''Allow customer to update phone about a specific customer'''
@@ -212,10 +213,10 @@ def update_customer_phone():
     db.session.commit()
 
     # Response back to the client, user marshmallow to serialize data
-    return CustomerSchema(exclude='address_id').dump(customer)
+    return CustomerSchema(exclude=['address_id']).dump(customer)
 
 
-@user_bp.route('/customer/update/address', methods=['PUT', 'PATCH'])
+@user_bp.route('/customer/update/address/', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_customer_address():
     '''Allow customer to update address'''
@@ -229,8 +230,7 @@ def update_customer_address():
  
     db.session.commit()
     # Response back to the client, user marshmallow to serialize data
-    return CustomerSchema(exclude='address_id').dump(customer)
-
+    return CustomerSchema(exclude=['address_id']).dump(customer)
 
 
 @user_bp.route('/customer/address/')
@@ -244,7 +244,7 @@ def get_all_addresses():
     addresses = db.session.scalars(stmt)  # Return all addresses found
 
     # Response back to the client, user marshmallow to serialize data
-    return AddressSchema(many=True).dump(addresses)
+    return AddressSchema(many=True, exclude=['postcode_id']).dump(addresses)
 
 
 @user_bp.route('/customer/address/', methods=['POST'])
@@ -261,10 +261,11 @@ def create_address():
     address = db.session.scalar(stmt)  # Return the address found
 
     # Response back to the client, user marshmallow to serialize data
-    return AddressSchema().dump(address)
+    return AddressSchema(exclude=['postcode_id']).dump(address), 201
 
 
 @user_bp.route('/customer/address/<int:address_id>/')
+@jwt_required()
 def get_single_address(address_id):
     '''Allow admin user to get information abobut a specific address'''
 
@@ -276,7 +277,7 @@ def get_single_address(address_id):
     # If not, return error message
     if address:
         # Response back to the client, user marshmallow to serialize data
-        return AddressSchema().dump(address)
+        return AddressSchema(exclude=['postcode_id']).dump(address)
     else:
         return {'error': f'user not found with id {address_id}'}, 404
 
@@ -286,6 +287,8 @@ def get_single_address(address_id):
 def get_all_postcodes():
     '''Allow admin user to get information about all postcodes'''
 
+    authorize()
+
     # Create SQL statement : select all postcodes
     stmt = db.select(Postcode)
     postcodes = db.session.scalars(stmt)  # Return all postcodes
@@ -294,6 +297,7 @@ def get_all_postcodes():
 
 
 @user_bp.route('/customer/address/postcode/<int:postcode_id>/')
+@jwt_required()
 def get_single_postcode(postcode_id):
     '''Allow admin user to get information abobut a specific postcode'''
 
@@ -308,7 +312,7 @@ def get_single_postcode(postcode_id):
         # Response back to the client, user marshmallow to serialize data
         return PostcodeSchema().dump(postcode)
     else:
-        return {'error': f'user not found with id {postcode_id}'}, 404
+        return {'error': f'Postcode not found with id {postcode_id}'}, 404
 
 @user_bp.route('/customer/address/postcode/', methods=['POST'])
 @jwt_required()
@@ -331,7 +335,7 @@ def create_postcode():
         db.session.commit()
        
         # Response back to the client, user marshmallow to serialize data
-        return PostcodeSchema().dump(postcode)
+        return PostcodeSchema().dump(postcode), 201
     except IntegrityError:
         return {'error': f'Postcode {postcode.postcode} already exists.'}
 

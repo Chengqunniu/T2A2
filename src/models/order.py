@@ -11,7 +11,8 @@ class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     order_date = db.Column(db.Date, nullable=False)
     ship_date = db.Column(db.String, default='Not shipped', nullable=False)
-    order_status_id = db.Column(db.Integer, db.ForeignKey("order_statues.id"), default=ORDER_STATUS_ID[0], nullable=False)
+    order_status_id = db.Column(db.Integer, db.ForeignKey("order_statues.id"), 
+    default=ORDER_STATUS_ID[0], nullable=False)
     customer_id = db.Column(db.Integer, db.ForeignKey("customers.id"), nullable=False)
     shipping_method_id = db.Column(db.Integer, db.ForeignKey("shipping_methods.id"), nullable=False)
 
@@ -44,6 +45,7 @@ class OrderSchema(ma.Schema):
 
 
     class Meta:
-        fields = ('id', 'order_date', 'ship_date', 'order_status', 'order_status_id', 'customer_id', 'shipping_method_id','shipping_method','order_details')
+        fields = ('id', 'order_date', 'ship_date', 'order_status', 'order_status_id', 'customer_id', 
+        'shipping_method_id','shipping_method','order_details')
         ordered = True # Display data in the order as listed in the fields above
     

@@ -21,8 +21,6 @@ class Product(db.Model):
     reviews = db.relationship('Review', back_populates='product', cascade='all, delete')
 
 
-
-
 class ProductSchema(ma.Schema):
     ''' Schema for Product'''
 

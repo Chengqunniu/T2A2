@@ -24,6 +24,8 @@ class Review(db.Model):
 class ReviewSchema(ma.Schema):
     ''' Schema for review'''
 
+    product = fields.Nested('ProductSchema', only=['name'])
+
     # Validate rating entered, make sure it is a number
     # Make sure it is from 1 to 5
     rating = fields.Integer(strict=True, required=True, validate=
@@ -38,7 +40,7 @@ class ReviewSchema(ma.Schema):
     
     
     class Meta:
-        fields = ('id', 'comment', 'rating', 'customer_id', 'product_id')
+        fields = ('id', 'comment', 'rating', 'customer_id', 'product_id', 'product')
         ordered = True # Display data in the order as listed in the fields above
         
         

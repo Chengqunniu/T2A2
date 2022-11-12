@@ -1,4 +1,5 @@
 from init import db, ma
+from models.address import Address
 from marshmallow import fields, validates
 from marshmallow.exceptions import ValidationError
 
@@ -23,7 +24,7 @@ class Customer(db.Model):
 class CustomerSchema(ma.Schema):
     ''' Schema for customer'''
 
-    address = fields.Nested('AddressSchema')
+    address = fields.Nested('AddressSchema', exclude=['postcode_id'])
     payment_accounts = fields.List(fields.Nested('PaymentAccountSchema', only=['encrypted_card_no']))
     orders = fields.List(fields.Nested('OrderSchema', exclude=['payment_account', 'customer_id']))
     reviews = fields.List(fields.Nested('ReviewSchema', exclude=['customer_id']))
@@ -44,6 +45,14 @@ class CustomerSchema(ma.Schema):
         count = db.session.scalar(stmt)
         if count > 0:
             raise ValidationError('Phone number has already been used')
+
+    @validates('address_id')
+    def validate_user_id(self, value):
+        ''' Validate the address_id entered, make sure it exists''' 
+        stmt = db.select(db.func.count()).select_from(Address).filter_by(id=value)
+        count = db.session.scalar(stmt)
+        if count == 0:
+            raise ValidationError('Address id does not exists, you have to create it first')
 
     class Meta:
         fields = ('id', 'phone', 'address', 'user', 'address_id')

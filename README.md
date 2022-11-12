@@ -790,6 +790,10 @@ If there is any additional requirements, I can easily create a new card in the b
 
   ---
 
+## API Endpoint Documentation
+
+[Endpoint Documentation](docs/API_endpoint_documentation.md)
+
 ## Database creation instruction
 
 * Create a database called: smoonypaws

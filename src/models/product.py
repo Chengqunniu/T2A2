@@ -30,9 +30,9 @@ class ProductSchema(ma.Schema):
     # Validate description entered, make sure it is a string
     description = fields.String(strict=True)
     # Validate price entered, make sure it is a float number
-    price = fields.Float(strict=True, required=True)
+    price = fields.Float(strict=True)
     # Validate stock entered, make sure it is a number
-    stock = fields.Integer(strict=True, required=True)
+    stock = fields.Integer(strict=True)
     # Validate create_date entered, make sure it is a date type
     create_date = fields.Date(strict=True)
     # Validate category_id entered, make sure it is a number

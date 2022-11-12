@@ -26,7 +26,7 @@ def get_all_orders():
     orders = db.session.scalars(stmt)  # Return all orders
 
     # Response back to the client, user marshmallow to serialize data
-    return OrderSchema(many=True, exclude=['shipping_method_id']).dump(orders) 
+    return OrderSchema(many=True, exclude=['shipping_method_id', 'customer_id']).dump(orders) 
 
 
 @order_bp.route('/<int:order_id>/')
@@ -42,7 +42,7 @@ def get_single_order(order_id):
     # If order not found, return the error message
     if order:
         # Response back to the client, user marshmallow to serialize data
-        return OrderSchema(exclude=['shipping_method_id']).dump(order) 
+        return OrderSchema(exclude=['shipping_method_id', 'customer_id']).dump(order) 
     else:
         return {'error': f'order not found with id {order_id}'}, 404
 
@@ -59,7 +59,7 @@ def get_all_orders_for_specific_customer():
     stmt = db.select(Order).filter_by(customer_id=customer.id)  # Create SQL statement : select orders belongs to the customer by using the customer_id
     orders = db.session.scalars(stmt)  # Return orders for the customer
     # Response back to the client, user marshmallow to serialize data
-    return OrderSchema(many=True, exclude=['shipping_method_id']).dump(orders) 
+    return OrderSchema(many=True, exclude=['shipping_method_id', 'customer_id']).dump(orders) 
 
 
 @order_bp.route('/customer/', methods=['POST'])
@@ -84,7 +84,7 @@ def create_order():
     db.session.commit()
 
     # Response back to the client, user marshmallow to serialize data
-    return OrderSchema(exclude=['shipping_method_id', 'order_status_id']).dump(order) 
+    return OrderSchema(exclude=['shipping_method_id', 'order_status_id', 'customer_id']).dump(order), 201
 
 @order_bp.route('/detail/', methods=['POST'])
 def create_order_detail():
@@ -105,7 +105,7 @@ def create_order_detail():
         db.session.commit()
 
         # Response back to the client, user marshmallow to serialize data
-        return OrderDetailSchema(exclude=['order_id', "product_id"]).dump(order_detail)
+        return OrderDetailSchema(exclude=['order_id', "product_id"]).dump(order_detail), 201
 
     except IntegrityError:
         return {'error': 'Please check order_id and product_id'}
@@ -121,7 +121,7 @@ def get_all_details():
     order_details = db.session.scalars(stmt)  # Return all order_details
 
     # Response back to the client, user marshmallow to serialize data
-    return OrderDetailSchema(many=True).dump(order_details) 
+    return OrderDetailSchema(many=True, exclude=['order_id', "product_id"]).dump(order_details) 
 
 
 @order_bp.route('/detail/<int:order_detail_id>/')
@@ -136,7 +136,7 @@ def get_single_order_detail(order_detail_id):
     # If not exists, return error message
     if order_detail:
         # Response back to the client, user marshmallow to serialize data
-        return OrderDetailSchema().dump(order_detail) 
+        return OrderDetailSchema(exclude=['order_id', "product_id"]).dump(order_detail) 
     else:
         return {'error': f'order_detail not found with id {order_detail_id}'}, 404
 
@@ -174,7 +174,7 @@ def get_single_order_status(order_status_id):
 @order_bp.route('/status/', methods=['POST'])
 @jwt_required()
 def create_order_statues():
-    '''Get information about all order statues, only allowed for admin'''
+    '''Allow admin user to create a new order status'''
 
     authorize()
 
@@ -197,7 +197,7 @@ def create_order_statues():
         return {'error': 'Order Status type already in use'}, 409
 
 
-@order_bp.route('/status/<int:order_status_id>', methods=['PUT', 'PATCH'])
+@order_bp.route('/status/<int:order_status_id>/', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_order_status(order_status_id):
     ''' Update order status'''
@@ -301,7 +301,7 @@ def create_shiping_methods():
         return {'error': 'Shipping Method type already in use'}, 409
 
 
-@order_bp.route('/shipping/<int:shipping_method_id>', methods=['PUT', 'PATCH'])
+@order_bp.route('/shipping/<int:shipping_method_id>/', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_one_shipping_method(shipping_method_id):
     ''' Update information about a specific shipping method'''
@@ -317,12 +317,13 @@ def update_one_shipping_method(shipping_method_id):
     if shipping_method:
         if 'type' in data.keys():
             shipping_method.type = data['type'] or shipping_method.type
-        shipping_method.price = data['price'] or shipping_method.price
+        if 'price' in data.keys():
+            shipping_method.price = data['price'] or shipping_method.price
 
         db.session.commit()
 
         # Response back to the client, user marshmallow to serialize data
-        return OrderStatusSchema().dump(shipping_method)
+        return ShippingMethodSchema().dump(shipping_method)
     else:
         return {'error': f'Shipping method not found with id {shipping_method_id}'}, 404
 

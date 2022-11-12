@@ -39,7 +39,7 @@ class PaymentAccountSchema(ma.Schema):
     # Validate security_no entered, make sure it is a number
     # Also make sure it is 3 digits
     security_no = fields.Integer(strict=True, required=True, validate=
-        Range(min=3,max=3, error='security_no must be 3 digits long.'))
+        Range(min=100, max=999, error='security_no must be 3 digits long.'))
     
     @validates('owner_name')
     def validate_owner_name(self, value):

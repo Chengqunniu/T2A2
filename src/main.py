@@ -15,7 +15,7 @@ def create_app():
 
     @app.errorhandler(400)
     def bad_request(err):
-        return {'error': 'Please enter all required data'}, 400
+        return {'error': 'Please check the data entered.'}, 400
 
     @app.errorhandler(KeyError)
     def key_error(err):

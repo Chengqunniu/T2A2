@@ -23,7 +23,7 @@ class OrderDetailSchema(ma.Schema):
     product = fields.Nested('ProductSchema', only=['id', 'name'])
     order = fields.Nested('OrderSchema', only=['id'])
     # Validate price entered, make sure it is a number
-    price = fields.Integer(strict=True, required=True)
+    price = fields.Float(strict=True, required=True)
     # Validate quantity entered, make sure it is a number
     quantity = fields.Integer(strict=True, required=True)
     # Validate order_id entered, make sure it is a number

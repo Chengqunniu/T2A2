@@ -26,7 +26,7 @@ class Order(db.Model):
 class OrderSchema(ma.Schema):
     ''' Schema for Order'''
     
-    customer = fields.List(fields.Nested('CustomerSchema', only=['id', 'phone', 'address']))
+    customer = fields.Nested('CustomerSchema', only=['id', 'phone', 'address'])
     shipping_method = fields.Nested('ShippingMethodSchema', exclude=['id'])
     order_details = fields.List(fields.Nested('OrderDetailSchema'))
     order_status = fields.Nested('OrderStatusSchema', exclude=['id'])
@@ -46,6 +46,6 @@ class OrderSchema(ma.Schema):
 
     class Meta:
         fields = ('id', 'order_date', 'ship_date', 'order_status', 'order_status_id', 'customer_id', 
-        'shipping_method_id','shipping_method','order_details')
+        'shipping_method_id','shipping_method','order_details', 'customer')
         ordered = True # Display data in the order as listed in the fields above
     

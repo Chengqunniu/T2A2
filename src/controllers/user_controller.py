@@ -354,9 +354,9 @@ def get_all_payment_accounts():
     payment_accounts = db.session.scalars(stmt)  # Return all payment_accounts for the customer
 
     # Response back to the client, user marshmallow to serialize data
-    return PaymentAccountSchema(many=True, exclude='card_no').dump(payment_accounts)
+    return PaymentAccountSchema(many=True, exclude=['card_no']).dump(payment_accounts)
 
-@user_bp.route('/customer/payment_account/<int:payment_account_id>')
+@user_bp.route('/customer/payment_account/<int:payment_account_id>/')
 @jwt_required()
 def get_single_payment_account(payment_account_id):
     '''Allow customer to get information about a specific payment_account'''
@@ -373,7 +373,7 @@ def get_single_payment_account(payment_account_id):
     if payment_account:
 
         # Response back to the client, user marshmallow to serialize data
-        return PaymentAccountSchema(exclude='card_no').dump(payment_account)
+        return PaymentAccountSchema(exclude=['card_no']).dump(payment_account)
     else:
         return {'error': f'Payment Account not found with id {payment_account_id}'}, 404
 
@@ -405,7 +405,7 @@ def create_payment_account():
         db.session.add(payment_account)
         db.session.commit()
         # Response back to the client, user marshmallow to serialize data
-        return PaymentAccountSchema(exclude='card_no').dump(payment_account), 201
+        return PaymentAccountSchema(exclude=['card_no']).dump(payment_account), 201
     except IntegrityError:
         return {'error': f'Card number already exists.'}
         

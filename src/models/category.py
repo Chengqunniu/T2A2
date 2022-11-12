@@ -16,6 +16,8 @@ class Category(db.Model):
 
 class CategorySchema(ma.Schema):
     ''' Schema for category'''
+    
+    products = fields.List(fields.Nested('ProductSchema', only=['name', 'price']))
 
     # Validate category type entered, make sure it is a string
     type = fields.String(strict=True)
@@ -33,6 +35,6 @@ class CategorySchema(ma.Schema):
 
 
     class Meta:
-        fields = ('id', 'type')
+        fields = ('id', 'type', 'products')
         ordered = True # Display data in the order as listed in the fields above
         

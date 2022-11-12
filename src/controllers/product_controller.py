@@ -68,7 +68,7 @@ def create_products():
         return {'error': 'Category does not exists.'}, 409
 
 
-@product_bp.route('/<int:product_id>', methods=['PUT', 'PATCH'])
+@product_bp.route('/<int:product_id>/', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_product(product_id):
     ''' Allow admin user to update information about a specific product'''
@@ -83,12 +83,16 @@ def update_product(product_id):
     if product:
         # Use try/except to handle IntegrityError, make sure product belongs to an existing category
         try:
-            product.name = data['name'] or product.name
+            if 'name' in data.keys():
+                product.name = data['name'] or product.name
             if 'description' in data.keys():
                 product.description = data['description'] or product.description
-            product.price = data['price'] or product.price
-            product.stock = data['stock'] or product.stock
-            product.category_id = data['category_id'] or product.category_id
+            if 'price' in data.keys():
+                product.price = data['price'] or product.price
+            if 'stock' in data.keys():          
+                product.stock = data['stock'] or product.stock
+            if 'category_id' in data.keys():
+                product.category_id = data['category_id'] or product.category_id
 
             db.session.commit() 
 
@@ -157,7 +161,7 @@ def get_single_category(category_id):
 def create_categories():
     '''Allow admin user to create new categories'''
 
-    # authorize()
+    authorize()
 
     data = CategorySchema().load(request.json)  # Use CategorySchema to sanitise and validate data
     # Use try/except to handle IntegrityError, make sure category type is unique
@@ -177,7 +181,7 @@ def create_categories():
 
 
 
-@product_bp.route('/category/<int:category_id>', methods=['PUT', 'PATCH'])
+@product_bp.route('/category/<int:category_id>/', methods=['PUT', 'PATCH'])
 @jwt_required()
 def update_category(category_id):
     '''Allow admin user to update information about a specific category'''
@@ -194,7 +198,7 @@ def update_category(category_id):
         # If category exists, update it
         # If not, return the error message
         if category:
-            category.type = data('type') or category.type
+            category.type = data['type'] or category.type
 
             db.session.commit()
 
@@ -290,7 +294,7 @@ def create_review(product_id_entered):
         db.session.commit()
 
         # Response back to the client, user marshmallow to serialize data
-        return ReviewSchema().dump(review) 
+        return ReviewSchema().dump(review), 201 
     else:
         return {'error': f'Product with id {product_id_entered} does not exists.'}, 404
 
@@ -318,8 +322,7 @@ def delete_review(product_id_entered, review_id):
         if review:
             db.session.delete(review)
             db.session.commit()
-            return {'message': f"Review with id:{review.id} has been deleted successfully."
-            f" deleted successfully"}
+            return {'message': f"Review with id:{review.id} has been deleted successfully."}
         else:
             return {'error': f'You do not have the review with id {review_id}'}, 404
     else:

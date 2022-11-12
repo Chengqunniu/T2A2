@@ -19,7 +19,7 @@ class ShippingMethodSchema(ma.Schema):
     ''' Schema for shipping_method'''
 
     # Validate price entered, make sure it is a float number
-    price = fields.Float(strict=True, required=True)
+    price = fields.Float(strict=True)
 
     @validates('type')
     def validate_type(self, value):

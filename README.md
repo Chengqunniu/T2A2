@@ -34,7 +34,7 @@ I am trying to build a web application for the sticker shop. The aim of this app
 
 I am going to use postgresql for this web application. PostgreSQL is a widely used object-relational database management system for flask applications. It supports both relational and non-relational queries.
 
-### The advantages of the postgresql are:
+### The advantages of the postgresql are: reference[1,2,3,4,5,6]
 
 ---
 
@@ -61,7 +61,7 @@ I am going to use postgresql for this web application. PostgreSQL is a widely us
 * Slower reading speed compared with MySQL. PostgreSQL has to read from the first row and then go through each row of the table in order to find the data. This results in relatively slow reading speed compared with other databases.
 * It does not implement replication well. Users need to export or replicate data to the new version.
   
-## Functionalities and benefits of ORM
+## Functionalities and benefits of ORM reference[7,8]
 
 ---
 
@@ -94,7 +94,7 @@ Object-realtional mapping (ORM) works between the application and the relational
 
 ---
 
-* ORM is independent of the database. Its high level implementation supports database connections and migrations. If change the databse from one to another, the code might be the same or only need a small number of changes.
+* ORM is independent of the database. Its high level implementation supports database connections and migrations. If change the databse from one to another, the code might be the same or only need a small number of changes. Therefore, it is easy to switch between different databases.
 * Developers could use familarised object-oriented programming languages to develop database, query and manipulate data. It is helpful for those who are not good at SQL.
 * ORM will handle the CRUD operations. As developers do not need to write tedious and repetitive SQL, developers could focus on the logic of the application(model), and write cleaner, less number of code. This is also time consuming.
 * Developers is able to develop a class library to create a standalone DLL, which can be used for other applications.
@@ -102,14 +102,19 @@ Object-realtional mapping (ORM) works between the application and the relational
 * The code of ORM has been tested, no need to test again, allows developers to save time and focus on testing the code of business logic.
 * ORM prevents SQL injection better because queires are sanitised.
 
-
-
-
-
 Ref:
 
-* https://circle.visual-paradigm.com/docs/code-engineering/object-relational-mapping/
-* https://www.keboola.com/blog/acid-transactions
+1. Donev, I. (2020) What is postgresql and how is it used in web hosting?: Awardspace, Free Web Hosting with PHP, MySQL, Email Sending, No Ads | AwardSpace.com. Available at: https://www.awardspace.com/kb/what-is-postgresql/#advantages (Accessed: October 11, 2022).
+2. Dhruv, S. (2019) PostgreSQL Advantages and disadvantages, Aalpha. Available at: https://www.aalpha.net/blog/pros-and-cons-of-using-postgresql-for-application-development/ (Accessed: October 11, 2022).
+3. Editor (2021) Comparing database management systems: Mysql, PostgreSQL, MSSQL server, mongodb, Elasticsearch, and others, AltexSoft. AltexSoft. Available at: https://www.altexsoft.com/blog/business/comparing-database-management-systems-mysql-postgresql-mssql-server-mongodb-elasticsearch-and-others/ (Accessed: October 11, 2022). 
+4. Jethva, H. (2022) MySQL VS postgresql - what's the difference (pros and cons), Cloud Infrastructure Services. Available at: https://cloudinfrastructureservices.co.uk/mysql-vs-postgresql/ (Accessed: October 11, 2022).
+5. Borozenets, M. (2022) Why use postgresql as a database for my next project in 2022, Fulcrum. Available at: https://fulcrum.rocks/blog/why-use-postgresql-database#why-we-use-postgresql-3 (Accessed: October 11, 2022).
+6. Bhagwat, S. (2021) 5 key postgres advantages over MySQL - DZone database, dzone.com. DZone. Available at: https://dzone.com/articles/five-key-postgres-advantages-over-mysql (Accessed: October 11, 2022).
+7. What are the acid properties of transactions and why do they matter in Data Engineering? (no date) What are the ACID properties of transactions and why do they matter in data engineering? Available at: https://www.keboola.com/blog/acid-transactions (Accessed: November 5, 2022). 
+8. object relational mapping (2018) Visual Paradigm Community Circle. Available at: https://circle.visual-paradigm.com/docs/code-engineering/object-relational-mapping/ (Accessed: November 5, 2022).
+9. What is an Orm and why you should use it - medium (no date) What is an ORM and Why You Should Use it. Available at: https://blog.bitsrc.io/what-is-an-orm-and-why-you-should-use-it-b2b6f75f5e2a (Accessed: November 5, 2022).
+
+---
 
 ## ERD
 
@@ -127,10 +132,11 @@ This table contains basic information for all users.
 Below are columns with their data types and constraints.
 
 * id (PK, serial int, not null) Primary key
-* first name (string(100), not null)
-* last name (string(100), not null) 
+* first name (string(100), not null), first name of the user
+* last name (string(100), not null), last name of the user
 * Password (text, not null), the password is used for user authentication
 * Is admin (boolean, default value is false). This column is for user authorization. Users who have True value are allowed to edit products. Only admin users have true value for this column. Customer users all have the default value. 
+* Email (string, not null, unique), email of the user, each user's email is unique
 
 ---
 
@@ -140,18 +146,17 @@ This table contains specific information for customers.
 Columns, data types, and constrains are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Email (string, not null)
-* Phone (int, not null)
-* User id (int, FK, not null, unique). Links the users table and customers table, one customer is one user.
-* Address(int, FK). Links the customers table and addresses table, one customer has zeor or one address in the database. Many customers might live at the same address.
+* Phone (int, not null), phone number of the user
+* User_id (int, FK, not null, unique). Links the users table and customers table, one customer is one user.
+* Address_id(int, FK). Links the customers table and addresses table, one customer has zeor or one address in the database. Many customers might live at the same address.
 
 #### Relationship (users table and customers table)
 
-The relationship between the users table and the customers table is a one-to-one relationship. A user could be created before the customer because the newly created user could be an admin instead of a customer. But a customer can only be created after the user. Therefore, a customer has one and only one user, while a user has 0 or 1 customer.
+The relationship between the users table and the customers table is a one-to-one relationship. A user could be created before the customer because the newly created user could be an admin instead of a customer. But a customer can only be created after the user. Therefore, a customer has one and only one user, while a user has zero or one customer.
 
 #### Relationship (addresses table and customers table)
 
-The relationship between the addresses table and the customers table is a one-to-many relationship. A user typically lives in one place and uses this place for delivery, they could provide their address after they logged in, therefore they might have no address in the system. And many customers might live together and shop separately. So a user has one and only one address, while an address might accommodate one or many customers.
+The relationship between the addresses table and the customers table is a one-to-many relationship. A user typically lives in one place and uses this place for delivery, they could provide their address after they logged in, therefore they might have no address in the system. And many customers might live together and shop separately. So a user has zero or one address, while an address might accommodate one or many customers.
 
 ---
 
@@ -161,14 +166,14 @@ This table contains customers' addresses.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Street number (int, not null)
-* Street name (string(100), not null)
-* Suburb (string(100), not null)
+* Street number (int, not null), street number of an address
+* Street name (string(100), not null), street name of an address
+* Suburb (string(100), not null), suburb of an address
 * Postcode_id (int, FK, not null) Links the address table and postcode table. Each address has one and only one postcode. Many addresses may have same postcode.
 
 #### Relationship (addresses table and postcodes table)
 
-Because different customers might have the same postcode, it will become repetitive if I leave it in the address table. So I have created a new table for it. I have also removed the state column from the address table because it links to the postcode rather than the address. 
+Because different customers might have the same postcode, it will become repetitive if I leave all of them in the address table. So I have created a new table for it. I have also removed the state column from the address table because it links to the postcode rather than the address. 
 The relationship between the postcodes table and the addresses table is a one-to-many relationship. Customers might live in the same area and have the same postcode for their address. Or none of them living in this area. And an address must only have one postcode. So a postcode is included in zero or many addresses, and an address has one and only one postcode.
 
 ---
@@ -179,7 +184,7 @@ This table contains the postcode and corresponding state.
 Columns, data types, and constraints are listed below:
 
 * Postcode (PK, int, not null)
-* State (string(100), not null)
+* State (string(100), not null), state name
 
 The primary key has been used as a foreign key in the addresses table, which was already mentioned above.
 
@@ -191,12 +196,12 @@ This table contains the payment information of the customer.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Card number (int, not null)
-* Card owner's name (string(100), not null)
-* Expire date (string, not null)
-* Security number (int, not null)
-* Encrypted_card_no (string, not null)
-* Customer id (int, FK, not null). Links the payment methods table to the customers table. A payment accounts belongs to only one customer and one customer has one or many payment accounts.
+* Card number (int, not null, unique), credit card number
+* Card owner's name (string(100), not null), name of the card owner
+* Expire date (string, not null), expiring date of the card
+* Security number (int, not null), CVV of the card
+* Encrypted_card_no (string(100), not null), encrypted card number
+* Customer_id (int, FK, not null). Links the payment methods table to the customers table. A payment accounts belongs to only one customer and one customer has one or many payment accounts.
 
 #### Relationship (payment accounts table and customers table)
 
@@ -211,15 +216,14 @@ Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
 * Order date (date, not null)
-* Ship date (date, not null)
-* Status (FK, int, not null). Links the orders table and order status table. One order has one and only one status simultaneously.
-* Customer id (FK, int, not null). Links the orders table and customers table. One order belongs to one customer.
-* Shipping method (FK, int, not null). Links the orders table and shipping methods table. One order only has one shipping method. A shipping method can be selected by many orders.
-* Payment account (FK, int, not null). Links the orders table and payment accounts table. One order only be paid by one payment account. A payment account can be used to pay many orders.
+* Ship date (string, not null)
+* Order_status_id (FK, int, not null, default is 1). Links the orders table and order status table. One order has one and only one status simultaneously. An order status might be used for many orders.
+* Customer_id (FK, int, not null). Links the orders table and customers table. One order belongs to one customer. A customer has one or many orders.
+* Shipping_method_id (FK, int, not null). Links the orders table and shipping methods table. One order only has one shipping method. A shipping method can be selected by many orders.
 
 #### Relationship (order status table and orders table)
 
-The relationship between the status table and the orders table is a one-to-many relationship. An order can only have one status, and it can not simultaneously have more than one status. The status could be used by many or not by any of the orders. So an order has one and only one status, and an order status has been used by zero or many orders.
+The relationship between the status table and the orders table is a one-to-many relationship. An order can only have one status, and it can not simultaneously have more than one status. The status could be used by many or none of the orders. So an order has one and only one status, and an order status has been used by zero or many orders.
 
 #### Relationship (orders table and customers table)
 
@@ -237,7 +241,7 @@ This table contains different types of order statuses.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Description (string(50), not null)
+* Type (string(100), not null, unique), type of order status like received, shipped
 
 The primary key of this table has been used as the foreign key in the orders table to link these two tables. The relationship has been mentioned above.
 
@@ -249,8 +253,8 @@ This table contains different types of shipping methods.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Type (text, not null)
-* Price(int, not null)
+* Type (text, not null, unique), type of shipping method, like standard, express
+* Price(float, not null), price of the shipping method
 
 The primary key of this table has been used as the foreign key in the orders table to link these two tables. The relationship has been mentioned above.
 
@@ -262,16 +266,16 @@ This table contains information for products.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null). Primary Key
-* Name (string(100), not null)
-* Description(text)
-* Price(int, not null)
-* Stock(int, not null)
-* Create_date (date, not null)
-* Category(int, FK, not null). Links the products table and the categories table. One product belongs to only one category. A category may have many products.
+* Name (string(100), not null, unique), name of each product
+* Description(text), description of each product
+* Price(float, not null), price of each product
+* Stock(int, not null), stock of each product
+* Create_date (date, not null), creation date of each product
+* Category(int, FK, not null). Links the products table and the categories table. One product belongs to only one category. A category may have zero or many products.
 
 #### Creating join table
 
-Initially, this table links to the orders table, and there is a many-to-many relationship between them. An order could contain only one or many products. A product might be included in many orders or none of them. So an order contains one or many products, a product might be included in zero or many orders.  
+Initially, this table links to the orders table, and there is a many-to-many relationship between them. An order could contain only one or many products. A product might be included in many orders or none of the orders. So an order contains one or many products, a product might be included in zero or many orders.  
 Because it is a many-to-many relationship, we need to create a join table for these two tables, which is the order details table. These two tables' primary key becomes the join table's foreign key.
 
 ---
@@ -283,8 +287,8 @@ Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null)
 * Price (int, not null). Creating a price column again is to ensure that if the price of the product changes later, the price here remains unchanged. Without this column, if we update the product's price, the price in the order details also changes, which results in inaccurate data in this table.
-* Order id (int, FK, not null). Links the order details table and orders table. One order detail must have a related order, and only relate to one order. One order may have many order details.
-* Product id (int, FK, not null). Links the product table and order details table. One order detail contains one product. A product may be included in many order details.
+* Order_id (int, FK, not null). Links the order details table and orders table. One order detail must have a related order, and only relate to one order. One order may have one or many order details.
+* Product_id (int, FK, not null). Links the product table and order details table. One order detail contains one product. A product may be included in zero or many order details.
   
 These two columns link to the orders and products table.
 
@@ -307,7 +311,7 @@ This table contains different categories of products.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Type (text, not null)
+* Type (text, not null, unique), type of the categories like sticker sheet, sticker flake
 
 #### Relationship (categories table and products table)
 
@@ -321,10 +325,10 @@ This table contains reviews of the product made by customers.
 Columns, data types, and constraints are listed below:
 
 * Id (PK, serial int, not null) Primary key
-* Comment (text)
-* Rating (int(0-5), not null)
-* Customer id (int, FK, not null) Links to the customers table. One review belongs to a particular customer. And a customer might have many reviews.
-* Product id (int, FK, not null). Links to the products table. One review relates to one product. And a product might have many reviews.
+* Comment (text, not null), review comments
+* Rating (int, not null), rating of the product
+* Customer_id (int, FK, not null) Links to the customers table. One review belongs to a particular customer. And a customer might have zero or many reviews.
+* Product_id (int, FK, not null). Links to the products table. One review relates to one product. And a product might have zero or many reviews.
 
 #### Relationship (customers table and reviews table)
 
@@ -466,7 +470,7 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
 
 ### Relationship (customer - order)
 
-  Customer model has one-to-many relationship with order model. One order belongs or placed by only one customer. A customer might have zero or many orders. I have created a foreign key (customer_id) to link these two models. With the relationship() method, I named it as customer in the order model(many-side) and orders in the customer model(one-side). I will only return the id, phone number and address of the customer in the order model. These fields are related to the order.
+  Customer model has one-to-many relationship with order model. One order belongs or placed by only one customer. A customer might have zero or many orders. I have created a foreign key (customer_id) to link these two models. With the relationship() method, I named it as customer in the order model(many-side) and orders in the customer model(one-side). I will display the id, phone number and address of the customer in the order model, which are related to the order.
 
 ### Relationship (shippingmethod - order)
 
@@ -581,10 +585,10 @@ Each schema is an class with base class called ma.Schema. MA is an instance of M
   * id
   * type(unique)
 
-  Category model relates to the product model, the relationship has been described above. And I decided not to display any fields from the product model.
+  Category model relates to the product model, the relationship has been described above. I decided to display the name and price of products in the categoryschema. This allows customers to search product by categories.
 
   Below is the code snippet for the category model(included data types, constraints and keys).
-  ![Category_model](docs/Cateogry_model.png)
+  ![Category_model](docs/Category_model.png)
 
 ---
 
@@ -701,12 +705,24 @@ I have created cards for:
 * error handling
   Same as README document, I might encounter different errors during the development. So it is an ongoing task and does not have due date.
 
+Below are some examples of the card created.
+
+![Trello-single_model](docs/Trello-single_model.png)
+![Trello-all_models](docs/Trello-all_models.png)
+![Trello-single_controller](docs/Trello-single_controller.png)
+![Trello-all_controllers](docs/Trello-all_controllers.png)
+
 Secondly, I have created several columns or stages, includes backlog, to-do, doing, testing and done. Then I put cards into different columns based on their priority and due date. The doing column contains tasks that are currently working on, the to-do column contains tasks that haven't been worked on, but has the highest priority in the rest of tasks. The rest of tasks are in the backlog cloumn, these tasks have lowest priority.
 
 Once a task in the doing column is finished, I will move the task into the done column.  Once all tasks in the doing column are finished, I will move task from the to-do column into the doing column and working on it. At the same time, I will move tasks from the backlog column to the to-do column.
 
 If there is any additional requirements, I can easily create a new card in the backlog without affecting others.
 
+Here is the overview of the trello board:
+
+![Trello board](docs/Trello-1.png)
+
+---
 
 ## Third party services or Pypi packages
 

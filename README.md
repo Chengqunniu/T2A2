@@ -816,5 +816,10 @@ Here is the overview of the trello board:
 
 * Create a database called: smoonypaws
 * create a user called 'smonnypaws_dev' with all access rights to the databse and a password: password123
-* Port number is default which is 5432.
+* Port number is default which is 5432
+* Set up own JWT secret key
+* Use 'pip install -r requirements.txt' to install all dependencies
+* User flask db create to create tables
+* flask db seed to add records
+* flask db drop to drop tables
   
